@@ -9,7 +9,6 @@ interface Toy {
   id: string;
   name: string;
   description: string;
-  price: number;
   category_id: string;
   image_url: string;
 }
@@ -29,7 +28,7 @@ export default function Catalog() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, price, category_id, image_url');
+        .select('id, name, description, category_id, image_url');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);

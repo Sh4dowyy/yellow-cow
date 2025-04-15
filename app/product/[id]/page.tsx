@@ -11,7 +11,6 @@ interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
   category_id: string;
   in_stock: boolean;
   image_url: string; // Keep this for the single image URL
@@ -33,7 +32,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           id,
           name,
           description,
-          price,
           category_id,
           in_stock,
           image_url
@@ -116,8 +114,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         {/* Product Details */}
         <div>
           <h1 className="text-3xl font-bold mb-4 text-gray-800">{product.name}</h1>
-          <p className="text-2xl font-bold text-sky-600 mb-6">{product.price} ₽</p>
-
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Описание</h2>
             <p className="text-gray-700">{product.description}</p>

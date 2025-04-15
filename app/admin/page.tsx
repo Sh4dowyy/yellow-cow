@@ -13,7 +13,6 @@ interface Product {
   id: string
   name: string
   description: string
-  price: number
   image: string
   category_id: string
   image_url: string
@@ -45,7 +44,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products') // Ensure this table name is correct
-        .select('id, name, description, price, image_url, category_id')
+        .select('id, name, description, image_url, category_id')
 
       if (productsError) {
         console.error("Error fetching products:", productsError)

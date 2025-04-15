@@ -10,7 +10,6 @@ interface Product {
   id: string
   name: string
   description: string
-  price: number
   image_url: string
   category_id: string
   is_featured: boolean
@@ -25,7 +24,7 @@ export default function Home() {
     const fetchFeaturedProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, description, price, image_url, category_id')
+        .select('id, name, description, image_url, category_id')
         .eq('is_featured', true)
 
       if (error) {

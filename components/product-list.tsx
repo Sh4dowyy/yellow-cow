@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast"
 interface Product {
   id: string
   name: string
-  price: number
   image_url: string
   category_id: string
 }
@@ -82,7 +81,6 @@ export default function ProductList({ products }: ProductListProps) {
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{getCategoryName(product.category_id)}</TableCell>
-                <TableCell className="text-right">{product.price} ₽</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" size="icon" onClick={() => handleEdit(product.id)}>

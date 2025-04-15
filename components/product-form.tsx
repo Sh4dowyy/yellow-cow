@@ -16,10 +16,7 @@ export default function ProductForm() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: "",
     category: "",
-    ageRecommendation: "",
-    material: "",
     image: null as File | null,
   })
 
@@ -57,10 +54,7 @@ export default function ProductForm() {
       setFormData({
         name: "",
         description: "",
-        price: "",
         category: "",
-        ageRecommendation: "",
-        material: "",
         image: null,
       })
     } catch (error) {
@@ -93,10 +87,6 @@ export default function ProductForm() {
         />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="price">Цена (₽)</Label>
-        <Input id="price" name="price" type="number" value={formData.price} onChange={handleChange} min="0" required />
-      </div>
 
       <div className="grid gap-2">
         <Label htmlFor="category">Категория</Label>
@@ -113,31 +103,6 @@ export default function ProductForm() {
             <SelectItem value="puzzles">Пазлы</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="ageRecommendation">Рекомендуемый возраст</Label>
-        <Select
-          value={formData.ageRecommendation}
-          onValueChange={(value) => handleSelectChange("ageRecommendation", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Выберите возраст" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="0+">0+</SelectItem>
-            <SelectItem value="1+">1+</SelectItem>
-            <SelectItem value="3+">3+</SelectItem>
-            <SelectItem value="5+">5+</SelectItem>
-            <SelectItem value="7+">7+</SelectItem>
-            <SelectItem value="10+">10+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="material">Материал</Label>
-        <Input id="material" name="material" value={formData.material} onChange={handleChange} />
       </div>
 
       <div className="grid gap-2">

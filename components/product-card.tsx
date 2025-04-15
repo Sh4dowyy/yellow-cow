@@ -9,7 +9,6 @@ interface Product {
   id: string
   name: string
   description: string
-  price: number
   image_url: string
   category_id: string
 }
@@ -27,7 +26,6 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="p-4">
         <h3 className="text-lg font-semibold mb-2 text-gray-800">{product.name}</h3>
         <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-        <p className="text-lg font-bold text-sky-600">{product.price} ₽</p>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between">
         <Link href={`/product/${product.id}`}>
