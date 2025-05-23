@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -64,6 +66,35 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-montserrat;
+    font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
+    font-weight: 400;
+  }
+  
+  /* Заголовки используют Montserrat в качестве основного шрифта */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  /* Специальный класс для геометрических заголовков */
+  .font-heading {
+    font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+  }
+  
+  /* Дополнительные классы для типографики */
+  .font-display {
+    font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+  }
+  
+  .font-body {
+    font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
   }
 }

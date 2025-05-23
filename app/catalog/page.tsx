@@ -55,23 +55,28 @@ export default function Catalog() {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg font-montserrat">Загрузка...</div>
+    </div>;
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return <div className="container mx-auto px-4 py-12 text-center">
+      <h1 className="text-3xl font-heading font-bold mb-4">Ошибка</h1>
+      <p className="text-red-500 font-body">{error}</p>
+    </div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">Каталог игрушек</h1>
+      <h1 className="text-3xl font-heading font-bold mb-8 text-center text-gray-800 tracking-tight">Каталог игрушек</h1>
 
       <Tabs defaultValue="all" className="mb-12">
         <TabsList className="flex flex-wrap justify-center mb-8 bg-transparent">
           <TabsTrigger
             key="all"
             value="all"
-            className="data-[state=active]:bg-sky-500 data-[state=active]:text-white rounded-full px-6 py-2 m-1"
+            className="data-[state=active]:bg-sky-500 data-[state=active]:text-white rounded-full px-6 py-2 m-1 font-montserrat font-medium transition-colors"
           >
             Все игрушки
           </TabsTrigger>
@@ -79,7 +84,7 @@ export default function Catalog() {
             <TabsTrigger
               key={category.id}
               value={category.id}
-              className="data-[state=active]:bg-sky-500 data-[state=active]:text-white rounded-full px-6 py-2 m-1"
+              className="data-[state=active]:bg-sky-500 data-[state=active]:text-white rounded-full px-6 py-2 m-1 font-montserrat font-medium transition-colors"
             >
               {category.name}
             </TabsTrigger>

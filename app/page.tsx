@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import ProductCard from "@/components/product-card"
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 
 interface Product {
@@ -12,7 +12,6 @@ interface Product {
   description: string
   image_url: string
   category_id: string
-  is_featured: boolean
 }
 
 export default function Home() {
@@ -40,14 +39,16 @@ export default function Home() {
   }, [])
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-lg font-montserrat">Загрузка...</div>
+    </div>
   }
 
   if (error) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-3xl font-bold mb-4">Ошибка</h1>
-        <p>{error}</p>
+        <h1 className="text-3xl font-heading font-bold mb-4">Ошибка</h1>
+        <p className="font-body text-gray-600">{error}</p>
       </div>
     )
   }
@@ -72,14 +73,14 @@ export default function Home() {
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-6 tracking-tight">
               Волшебный мир детских игрушек
             </h1>
-            <p className="text-xl text-white mb-8">
+            <p className="text-xl font-body text-white mb-8 leading-relaxed">
               Подарите вашему ребенку радость и развитие с игрушками от Aria Toys
             </p>
             <Link href="/catalog">
-              <Button className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold text-lg px-8 py-6 rounded-full">
+              <Button className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-montserrat font-bold text-lg px-8 py-6 rounded-full transition-colors">
                 Смотреть игрушки
               </Button>
             </Link>
@@ -90,7 +91,7 @@ export default function Home() {
       {/* Popular Toys Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Популярные игрушки</h2>
+          <h2 className="text-3xl font-heading font-bold text-center mb-12 text-gray-800 tracking-tight">Популярные игрушки</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {popularToys.map((toy) => (
               <ProductCard key={toy.id} product={toy} />
@@ -98,7 +99,7 @@ export default function Home() {
           </div>
           <div className="text-center mt-12">
             <Link href="/catalog">
-              <Button variant="outline" className="border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white">
+              <Button variant="outline" className="border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-montserrat font-medium transition-colors">
                 Смотреть все игрушки
               </Button>
             </Link>
@@ -110,17 +111,17 @@ export default function Home() {
       <section className="py-16 bg-sky-50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">О нас</h2>
+            <h2 className="text-3xl font-heading font-bold text-center mb-8 text-gray-800 tracking-tight">О нас</h2>
             <div className="bg-white p-8 rounded-lg shadow-md">
-              <p className="text-lg text-gray-700 mb-6">
+              <p className="text-lg font-body text-gray-700 mb-6 leading-relaxed">
                 Aria Toys — это магазин качественных игрушек для детей всех возрастов. Мы тщательно отбираем каждую
                 игрушку, уделяя особое внимание качеству материалов, безопасности и развивающему потенциалу.
               </p>
-              <p className="text-lg text-gray-700 mb-6">
+              <p className="text-lg font-body text-gray-700 mb-6 leading-relaxed">
                 Наша миссия — приносить радость детям и спокойствие родителям, предлагая игрушки, которые не только
                 развлекают, но и способствуют развитию важных навыков и творческого мышления.
               </p>
-              <p className="text-lg text-gray-700">
+              <p className="text-lg font-body text-gray-700 leading-relaxed">
                 Мы верим, что каждый ребенок уникален, и стремимся предложить разнообразный ассортимент игрушек, чтобы
                 каждый малыш нашел то, что ему по душе.
               </p>

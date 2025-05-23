@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
+import { supabase } from "@/utils/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 
 interface Product {
@@ -13,8 +13,10 @@ interface Product {
   description: string;
   category_id: string;
   in_stock: boolean;
-  image_url: string; // Keep this for the single image URL
-  category_name?: string; // Optional category name
+  image_url: string;
+  wb_url: string;
+  ozon_url: string;
+  category_name?: string;
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +27,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const { id } = await params; // Unwrap params using React.use()
+      const { id } = await params;
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -34,42 +36,30 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           description,
           category_id,
           in_stock,
-          image_url
+          image_url,
+          wb_url,
+          ozon_url,
+          categories (
+            name
+          )
         `)
         .eq('id', id)
-        .single(); // Fetch a single product
+        .single();
 
       if (error) {
         console.error("Error fetching product:", error);
         setError("Failed to load product.");
       } else {
-        // Set the product data
-        setProduct(data);
+        // Set the product data with category name
+        setProduct({
+          ...data,
+          category_name: (data.categories as any)?.name || "Неизвестная категория"
+        });
       }
       setLoading(false);
     };
 
-    const fetchCategoryName = async (category_id: string) => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('name')
-        .eq('id', category_id)
-        .single(); // Fetch the category name
-
-      if (error) {
-        console.error("Error fetching category:", error);
-        return "Неизвестная категория"; // Default value if there's an error
-      }
-      return data?.name || "Неизвестная категория"; // Return the category name or default
-    };
-
-    fetchProduct().then(() => {
-      if (product) {
-        fetchCategoryName(product.category_id).then((categoryName) => {
-          setProduct((prev) => prev ? { ...prev, category_name: categoryName } : null);
-        });
-      }
-    });
+    fetchProduct();
   }, [params]);
 
   if (loading) {
@@ -102,13 +92,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         <div className="space-y-4">
           <div className="relative h-80 md:h-96 bg-white rounded-lg overflow-hidden border">
             <Image
-              src={product.image_url || "/placeholder.svg"} // Use image_url directly
+              src={product.image_url || "/placeholder.svg"}
               alt={product.name}
               fill
               className="object-contain p-4"
             />
           </div>
-          {/* If you have additional images, you can handle them here */}
         </div>
 
         {/* Product Details */}
@@ -123,7 +112,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Категория</h3>
-                <p className="text-gray-800">{product.category_name || "Неизвестная категория"}</p>
+                <p className="text-gray-800">{product.category_name}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Наличие</h3>
@@ -134,13 +123,50 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
           </Card>
 
-          <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-3 text-lg mb-4">
-            Добавить в корзину
-          </Button>
-
-          <p className="text-sm text-gray-500 text-center">
-            * Функция добавления в корзину будет доступна в следующей версии
-          </p>
+          {/* External Store Links */}
+          <div className="mb-6 space-y-3">
+            <h3 className="text-lg font-semibold text-gray-800">Купить в магазинах</h3>
+            <div className="flex gap-2 flex-wrap">
+              {product.wb_url && (
+                <a
+                  href={product.wb_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 min-w-0"
+                >
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 text-xs flex items-center justify-center gap-1">
+                    <Image 
+                      src="/logos/wildberries-logo.svg" 
+                      alt="Wildberries" 
+                      width={50} 
+                      height={16}
+                      className="object-contain bg-white rounded-sm"
+                    />
+                    Купить на Wildberries
+                  </Button>
+                </a>
+              )}
+              {product.ozon_url && (
+                <a
+                  href={product.ozon_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 min-w-0"
+                >
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 text-xs flex items-center justify-center gap-1">
+                    <Image 
+                      src="/logos/ozon-logo.svg" 
+                      alt="Ozon" 
+                      width={50} 
+                      height={16}
+                      className="object-contain bg-white rounded-sm"
+                    />
+                    Купить на Ozon
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
