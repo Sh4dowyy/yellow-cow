@@ -233,25 +233,25 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   className="object-contain p-4" 
                 />
                 {product.is_featured && (
-                  <div className="absolute top-2 right-2 bg-yellow-400 text-gray-800 px-2 py-1 rounded-full text-xs font-bold">
+                                      <div className="absolute top-2 right-2 bg-sky-400 text-white px-2 py-1 rounded-full text-xs font-montserrat font-bold">
                     Популярное
                   </div>
                 )}
                 {!product.in_stock && (
-                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-montserrat font-bold">
                     Нет в наличии
                   </div>
                 )}
               </div>
               
               <CardContent className="p-4">
-                <h3 className="text-lg font-semibold mb-2 text-gray-800 line-clamp-1">
+                <h3 className="text-lg font-montserrat font-semibold mb-2 text-gray-800 line-clamp-1">
                   {product.name}
                 </h3>
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                <p className="text-sm font-montserrat text-gray-600 mb-2 line-clamp-2">
                   {product.description}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs font-montserrat text-gray-500">
                   Категория: {getCategoryName(product.category_id)}
                 </p>
               </CardContent>

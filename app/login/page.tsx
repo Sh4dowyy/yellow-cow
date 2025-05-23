@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div className="container mx-auto px-4 py-12 flex justify-center">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Вход в систему</CardTitle>
+                      <CardTitle className="text-2xl font-montserrat font-bold text-center">Вход в систему</CardTitle>
           <CardDescription className="text-center">Введите свои данные для доступа к админ-панели</CardDescription>
         </CardHeader>
         <CardContent>

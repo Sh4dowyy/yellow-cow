@@ -52,6 +52,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
       .order('name');
 
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching categories:", error);
     } else {
       setCategories(data || []);
@@ -78,20 +79,33 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
     const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file);
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
 
-    if (uploadError) {
-      console.error('Error uploading image:', uploadError);
+      if (uploadError) {
+        // eslint-disable-next-line no-console
+        console.error('Error uploading image:', uploadError);
+        // eslint-disable-next-line no-console
+        console.error('Upload error details:', {
+          message: uploadError.message,
+          name: uploadError.name,
+          stack: uploadError.stack
+        });
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Unexpected error during upload:', error);
       return null;
     }
-
-    const { data } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,7 +120,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
         } else {
-          alert('Failed to upload image');
+          alert('Не удалось загрузить изображение. Проверьте настройки Supabase Storage или используйте URL изображения.');
           setIsUploading(false);
           return;
         }
@@ -117,8 +131,9 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
         .insert([{ ...formData, image_url: imageUrl }]);
 
       if (error) {
+        // eslint-disable-next-line no-console
         console.error("Error adding product:", error);
-        alert('Failed to add product');
+        alert('Не удалось добавить игрушку');
       } else {
         // Reset form or handle success
         setFormData({
@@ -132,14 +147,15 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
           ozon_url: '',
         });
         setImageFile(null);
-        alert('Product added successfully!');
+        alert('Игрушка успешно добавлена!');
         if (onProductAdded) {
           onProductAdded();
         }
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error:', error);
-      alert('An error occurred');
+      alert('Произошла ошибка');
     } finally {
       setIsUploading(false);
     }
@@ -148,30 +164,30 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="name">Product Name</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="name">Название игрушки</label>
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
-          placeholder="Enter product name"
+          placeholder="Введите название игрушки"
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="description">Description</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="description">Описание</label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
-          placeholder="Enter product description"
+          placeholder="Введите описание игрушки"
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="category_id">Category</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="category_id">Категория</label>
         <select
           name="category_id"
           value={formData.category_id}
@@ -179,7 +195,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
           required
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         >
-          <option value="">Select a category</option>
+          <option value="">Выберите категорию</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -195,7 +211,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
           onChange={handleChange}
           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
         />
-        <label className="ml-2 block text-sm font-medium text-gray-700">Featured</label>
+        <label className="ml-2 block text-sm font-medium text-gray-700">Рекомендуемая</label>
       </div>
       <div className="flex items-center">
         <input
@@ -205,10 +221,22 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
           onChange={handleChange}
           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
         />
-        <label className="ml-2 block text-sm font-medium text-gray-700">In Stock</label>
+        <label className="ml-2 block text-sm font-medium text-gray-700">В наличии</label>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="image">Product Image</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="image_url">URL изображения</label>
+        <input
+          type="url"
+          name="image_url"
+          value={formData.image_url}
+          onChange={handleChange}
+          placeholder="Введите URL изображения (например, с Unsplash)"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
+        <p className="text-xs text-gray-500 mt-1">Или загрузите файл:</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="image">Загрузить изображение</label>
         <input
           type="file"
           onChange={handleFileChange}
@@ -216,37 +244,38 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
         {imageFile && (
-          <p className="text-sm text-gray-600 mt-1">Selected: {imageFile.name}</p>
+          <p className="text-sm text-gray-600 mt-1">Выбрано: {imageFile.name}</p>
         )}
+        <p className="text-xs text-gray-500 mt-1">Загруженный файл имеет приоритет над URL</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="wb_url">WB URL</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="wb_url">Ссылка на Wildberries</label>
         <input
           type="text"
           name="wb_url"
           value={formData.wb_url}
           onChange={handleChange}
-          placeholder="Enter WB URL"
+          placeholder="Введите ссылку на Wildberries"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="ozon_url">Ozon URL</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="ozon_url">Ссылка на Ozon</label>
         <input
           type="text"
           name="ozon_url"
           value={formData.ozon_url}
           onChange={handleChange}
-          placeholder="Enter Ozon URL"
+          placeholder="Введите ссылку на Ozon"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
       <button 
         type="submit" 
         disabled={isUploading}
-        className="w-full bg-blue-600 text-white font-bold py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+                    className="w-full bg-blue-600 text-white font-montserrat font-bold py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
       >
-        {isUploading ? 'Adding Product...' : 'Add Product'}
+        {isUploading ? 'Добавление игрушки...' : 'Добавить игрушку'}
       </button>
     </form>
   );
@@ -281,6 +310,7 @@ export default function AdminPage() {
         .select('id, name, description, image_url, category_id, is_featured, in_stock, wb_url, ozon_url')
 
       if (productsError) {
+        // eslint-disable-next-line no-console
         console.error("Error fetching products:", productsError)
         setError("Failed to load products.")
       } else {
@@ -300,6 +330,7 @@ export default function AdminPage() {
       .select('id, name, description, image_url, category_id, is_featured, in_stock, wb_url, ozon_url')
 
     if (productsError) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching products:", productsError)
       setError("Failed to load products.")
     } else {
@@ -328,7 +359,7 @@ export default function AdminPage() {
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Панель администратора</h1>
+        <h1 className="text-3xl font-montserrat font-bold text-gray-800">Панель администратора</h1>
         <Button variant="outline" onClick={handleLogout}>
           Выйти
         </Button>
