@@ -103,6 +103,7 @@ export default function Home() {
               <div className="w-20 h-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full mx-auto"></div>
             </div>
             
+            
             <p className="text-xl md:text-2xl font-montserrat font-bold text-white mb-8 leading-relaxed">
               Волшебный мир детских игрушек!
             </p>
