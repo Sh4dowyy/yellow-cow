@@ -45,31 +45,31 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-sky-500">Aria Toys</span>
+            <span className="text-2xl font-heading font-bold text-sky-500 tracking-tight">Aria Toys</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link
               href="/catalog"
-              className={`text-base font-medium ${isActive("/catalog") ? "text-yellow-500" : "text-gray-700 hover:text-sky-500"}`}
+              className={`text-base font-medium font-montserrat transition-colors ${isActive("/catalog") ? "text-yellow-500" : "text-gray-700 hover:text-sky-500"}`}
             >
               Каталог
             </Link>
             <Link
               href="/about"
-              className={`text-base font-medium ${isActive("/about") ? "text-yellow-500" : "text-gray-700 hover:text-sky-500"}`}
+              className={`text-base font-medium font-montserrat transition-colors ${isActive("/about") ? "text-yellow-500" : "text-gray-700 hover:text-sky-500"}`}
             >
               О нас
             </Link>
             {isAuthenticated ? (
               <>
-                <Link href="/admin" className="text-base font-medium text-gray-700 hover:text-sky-500">Админка</Link>
-                <Button variant="outline" onClick={handleLogout}>Выйти</Button>
+                <Link href="/admin" className="text-base font-medium font-montserrat text-gray-700 hover:text-sky-500 transition-colors">Админка</Link>
+                <Button variant="outline" onClick={handleLogout} className="font-montserrat">Выйти</Button>
               </>
             ) : (
               <Link href="/login">
-                <Button variant="outline" className="border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white">
+                <Button variant="outline" className="border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-montserrat font-medium">
                   Войти
                 </Button>
               </Link>
@@ -80,7 +80,7 @@ export default function Header() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-sky-500 focus:outline-none"
+              className="text-gray-700 hover:text-sky-500 focus:outline-none transition-colors"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -92,31 +92,31 @@ export default function Header() {
           <nav className="md:hidden mt-4 pb-4 space-y-4">
             <Link
               href="/"
-              className={`block text-base font-medium ${isActive("/") ? "text-yellow-500" : "text-gray-700"}`}
+              className={`block text-base font-medium font-montserrat ${isActive("/") ? "text-yellow-500" : "text-gray-700"}`}
               onClick={() => setIsMenuOpen(false)}
             >
               Главная
             </Link>
             <Link
               href="/catalog"
-              className={`block text-base font-medium ${isActive("/catalog") ? "text-yellow-500" : "text-gray-700"}`}
+              className={`block text-base font-medium font-montserrat ${isActive("/catalog") ? "text-yellow-500" : "text-gray-700"}`}
               onClick={() => setIsMenuOpen(false)}
             >
               Каталог
             </Link>
             <Link
               href="/about"
-              className={`block text-base font-medium ${isActive("/about") ? "text-yellow-500" : "text-gray-700"}`}
+              className={`block text-base font-medium font-montserrat ${isActive("/about") ? "text-yellow-500" : "text-gray-700"}`}
               onClick={() => setIsMenuOpen(false)}
             >
               О нас
             </Link>
             {isAuthenticated ? (
               <>
-                <Link href="/admin" className="block text-base font-medium text-gray-700" onClick={() => setIsMenuOpen(false)}>Админка</Link>
+                <Link href="/admin" className="block text-base font-medium font-montserrat text-gray-700" onClick={() => setIsMenuOpen(false)}>Админка</Link>
                 <Button
                   variant="outline"
-                  className="w-full border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white"
+                  className="w-full border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-montserrat font-medium"
                   onClick={handleLogout}
                 >
                   Выйти
@@ -126,7 +126,7 @@ export default function Header() {
               <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button
                   variant="outline"
-                  className="w-full border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white"
+                  className="w-full border-sky-500 text-sky-500 hover:bg-sky-500 hover:text-white font-montserrat font-medium"
                 >
                   Войти
                 </Button>
