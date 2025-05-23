@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/utils/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, ShoppingBag, Package, CheckCircle, XCircle } from "lucide-react";
 
 interface Product {
   id: string;
@@ -26,6 +28,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const router = useRouter();
 
   useEffect(() => {
+    // Прокрутка к верху страницы при загрузке
+    window.scrollTo(0, 0);
+
     const fetchProduct = async () => {
       const { id } = await params;
       const { data, error } = await supabase
@@ -63,15 +68,28 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }, [params]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-500"></div>
+          <p className="font-montserrat text-gray-600">Загрузка товара...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-3xl font-bold mb-4">Ошибка</h1>
-        <p>{error}</p>
-        <Button onClick={() => router.back()}>Вернуться назад</Button>
+        <div className="max-w-md mx-auto">
+          <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-3xl font-montserrat font-bold mb-4 text-gray-800">Ошибка</h1>
+          <p className="font-montserrat text-gray-600 mb-6">{error}</p>
+          <Button onClick={() => router.back()} className="font-montserrat">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Вернуться назад
+          </Button>
+        </div>
       </div>
     );
   }
@@ -79,93 +97,143 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-3xl font-bold mb-4">Товар не найден</h1>
-        <Button onClick={() => router.back()}>Вернуться назад</Button>
+        <div className="max-w-md mx-auto">
+          <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-3xl font-montserrat font-bold mb-4 text-gray-800">Товар не найден</h1>
+          <p className="font-montserrat text-gray-600 mb-6">К сожалению, запрашиваемый товар не существует</p>
+          <Button onClick={() => router.back()} className="font-montserrat">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Вернуться назад
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Product Images */}
-        <div className="space-y-4">
-          <div className="relative h-80 md:h-96 bg-white rounded-lg overflow-hidden border">
-            <Image
-              src={product.image_url || "/placeholder.svg"}
-              alt={product.name}
-              fill
-              className="object-contain p-4"
-            />
-          </div>
+    <div className="bg-gradient-to-br from-blue-50 to-white min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.back()}
+            className="font-montserrat text-gray-600 hover:text-blue-600 pl-0"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Назад
+          </Button>
         </div>
 
-        {/* Product Details */}
-        <div>
-          <h1 className="text-3xl font-bold mb-4 text-gray-800">{product.name}</h1>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Описание</h2>
-            <p className="text-gray-700">{product.description}</p>
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Product Image Section */}
+          <div className="space-y-4">
+            <Card className="p-2 bg-white shadow-lg border-0">
+              <div className="relative h-96 lg:h-[500px] bg-gradient-to-br from-gray-50 to-white rounded-lg overflow-hidden">
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-6 hover:scale-105 transition-transform duration-300"
+                  priority
+                />
+              </div>
+            </Card>
           </div>
 
-          <Card className="mb-6 p-4 bg-sky-50 border-sky-200">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Категория</h3>
-                <p className="text-gray-800">{product.category_name}</p>
+          {/* Product Details Section */}
+          <div className="space-y-6">
+            {/* Category and Article Badges */}
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="font-montserrat">{product.category_name}</Badge>
+            </div>
+
+            {/* Product Title */}
+            <div className="space-y-3">
+              <h1 className="text-4xl lg:text-5xl font-montserrat font-bold text-gray-800 leading-tight">
+                {product.name}
+              </h1>
+              
+              {/* Stock Status */}
+              <div className="flex items-center gap-2">
+                {product.in_stock ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 font-montserrat">
+                      В наличии
+                    </Badge>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-5 w-5 text-red-500" />
+                    <Badge variant="secondary" className="bg-red-100 text-red-700 font-montserrat">
+                      Нет в наличии
+                    </Badge>
+                  </>
+                )}
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Наличие</h3>
-                <p className={product.in_stock ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                  {product.in_stock ? "В наличии" : "Нет в наличии"}
+            </div>
+
+            {/* Description */}
+            <Card className="p-6 bg-white shadow-md border-0">
+              <h2 className="text-xl font-montserrat font-semibold mb-4 text-gray-800 flex items-center gap-2">
+                <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                Описание товара
+              </h2>
+              <div className="prose prose-gray max-w-none">
+                <p className="font-montserrat text-gray-700 leading-relaxed text-lg">
+                  {product.description}
                 </p>
               </div>
-            </div>
-          </Card>
+            </Card>
 
-          {/* External Store Links */}
-          <div className="mb-6 space-y-3">
-            <h3 className="text-lg font-semibold text-gray-800">Купить в магазинах</h3>
-            <div className="flex gap-2 flex-wrap">
-              {product.wb_url && (
-                <a
-                  href={product.wb_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-0"
-                >
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 text-xs flex items-center justify-center gap-1">
-                    <Image 
-                      src="/logos/wildberries-logo.svg" 
-                      alt="Wildberries" 
-                      width={50} 
-                      height={16}
-                      className="object-contain bg-white rounded-sm"
-                    />
-                    Купить на Wildberries
-                  </Button>
-                </a>
-              )}
-              {product.ozon_url && (
-                <a
-                  href={product.ozon_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 min-w-0"
-                >
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 text-xs flex items-center justify-center gap-1">
-                    <Image 
-                      src="/logos/ozon-logo.svg" 
-                      alt="Ozon" 
-                      width={50} 
-                      height={16}
-                      className="object-contain bg-white rounded-sm"
-                    />
-                    Купить на Ozon
-                  </Button>
-                </a>
-              )}
-            </div>
+            {/* Purchase Options */}
+                          <Card className="p-6 bg-gradient-to-r from-blue-50 to-sky-50 shadow-md border border-blue-200">
+              <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-blue-600" />
+                Где купить
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {product.wb_url && (
+                  <a
+                    href={product.wb_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block group"
+                  >
+                                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-montserrat py-3 px-4 text-sm shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02]">
+                      <Image 
+                        src="/logos/wildberries-logo.svg" 
+                        alt="Wildberries" 
+                        width={24} 
+                        height={24}
+                        className="object-contain bg-white rounded p-1 mr-2"
+                      />
+                      Wildberries
+                    </Button>
+                  </a>
+                )}
+                {product.ozon_url && (
+                  <a
+                    href={product.ozon_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block group"
+                  >
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-montserrat py-3 px-4 text-sm shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02]">
+                      <Image 
+                        src="/logos/ozon-logo.svg" 
+                        alt="Ozon" 
+                        width={24} 
+                        height={24}
+                        className="object-contain bg-white rounded p-1 mr-2"
+                      />
+                      Ozon
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </Card>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Montserrat } from "next/font/google"
 import "./globals.css"
-import Header from "@/components/header"
+import HeaderWithSidebar from "@/components/header-with-sidebar"
 import Footer from "@/components/footer"
 
 // Подключаем Montserrat через Google Fonts
@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className={`${montserrat.variable} bg-sky-50 font-montserrat`}>
           <div className="flex min-h-screen flex-col">
-            <Header />
+            <HeaderWithSidebar />
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
