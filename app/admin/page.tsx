@@ -144,6 +144,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
       setIsUploading(false);
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
