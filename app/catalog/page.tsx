@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/product-card"
+import ContactButton from "@/components/contact-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
 
@@ -12,6 +13,7 @@ interface Toy {
   description: string;
   category_id: string;
   image_url: string;
+  in_stock: boolean;
 }
 
 interface Category {
@@ -35,7 +37,7 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url');
+        .select('id, name, description, category_id, image_url, in_stock');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
@@ -205,6 +207,9 @@ function CatalogContent() {
         ))}
       </Tabs>
       </div>
+
+      {/* Contact Button */}
+      <ContactButton />
     </div>
   )
 }

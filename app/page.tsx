@@ -1,6 +1,8 @@
 "use client"
 
 import ProductCard from "@/components/product-card"
+import ContactButton from "@/components/contact-button"
+import YandexMap from "@/components/yandex-map"
 import { useState, useEffect } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -11,6 +13,7 @@ interface Product {
   description: string
   image_url: string
   category_id: string
+  in_stock: boolean
 }
 
 export default function Home() {
@@ -24,7 +27,7 @@ export default function Home() {
     const fetchFeaturedProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, description, image_url, category_id')
+        .select('id, name, description, image_url, category_id, in_stock')
         .eq('is_featured', true)
 
       if (error) {
@@ -223,57 +226,95 @@ export default function Home() {
       <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0">
-          <div className="absolute top-10 right-10 text-sky-300 text-3xl">⭐</div>
-          <div className="absolute bottom-20 right-20 text-sky-300 text-3xl">⭐</div>
+          <div className="absolute top-8 right-12 text-sky-300 text-2xl">⭐</div>
+          <div className="absolute bottom-8 left-12 text-sky-300 text-2xl">⭐</div>
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-montserrat font-black text-white mb-4 tracking-tight">
+              <h2 className="text-3xl font-montserrat font-bold text-white mb-6">
                 О магазине ARIA TOYS
               </h2>
-              <p className="text-xl text-blue-100 font-montserrat font-medium">Мы создаем волшебство детства уже много лет!</p>
+              <p className="text-blue-100 font-montserrat leading-relaxed text-lg max-w-3xl mx-auto">
+                Мы специализируемся на качественных детских игрушках, которые развивают воображение и творческие способности. 
+                Каждая игрушка тщательно отобрана с заботой о безопасности и развитии вашего ребенка.
+              </p>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl shadow-2xl border border-white/20">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-xl font-montserrat font-bold text-white mb-2">Качество превыше всего</h3>
-                    <p className="text-blue-100 font-montserrat leading-relaxed">
-                      Мы тщательно отбираем каждую игрушку, уделяя особое внимание качеству материалов и безопасности.
-                    </p>
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+              {/* Contact Info */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+                <h3 className="text-xl font-montserrat font-semibold text-white mb-6 text-center">
+                  📞 Контактная информация
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="text-sky-300 text-lg mt-1">📍</div>
+                    <div>
+                      <div className="font-montserrat font-semibold text-white text-sm">Адрес</div>
+                      <div className="font-montserrat text-blue-100 text-sm">
+                        Ленинградская обл., Янино-1,<br />
+                        Шоссейная улица, 48Ес2
+                      </div>
+                    </div>
                   </div>
                   
-                  <div>
-                    <h3 className="text-xl font-montserrat font-bold text-white mb-2">Развитие и радость</h3>
-                    <p className="text-blue-100 font-montserrat leading-relaxed">
-                      Наши игрушки не только развлекают, но и способствуют развитию важных навыков и творческого мышления.
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="text-sky-300 text-lg mt-1">📱</div>
+                    <div>
+                      <div className="font-montserrat font-semibold text-white text-sm">Телефон</div>
+                      <div className="font-montserrat text-blue-100 text-sm">
+                        <a href="tel:+79112929496" className="hover:text-white transition-colors">
+                          +7 911 292-94-96
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="text-sky-300 text-lg mt-1">📧</div>
+                    <div>
+                      <div className="font-montserrat font-semibold text-white text-sm">E-mail</div>
+                      <div className="font-montserrat text-blue-100 text-sm">
+                        <a href="mailto:ariatoys@mail.ru" className="hover:text-white transition-colors">
+                          ariatoys@mail.ru
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="text-sky-300 text-lg mt-1">🕒</div>
+                    <div>
+                      <div className="font-montserrat font-semibold text-white text-sm">Режим работы</div>
+                      <div className="font-montserrat text-blue-100 text-sm">
+                        Пн – Пт: с 09:00 до 18:00
+                      </div>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-xl font-montserrat font-bold text-white mb-2">Для каждого ребенка</h3>
-                    <p className="text-blue-100 font-montserrat leading-relaxed">
-                      Мы верим, что каждый ребенок уникален, и предлагаем разнообразный ассортимент для всех возрастов.
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-xl font-montserrat font-bold text-white mb-2">Быстрая доставка</h3>
-                    <p className="text-blue-100 font-montserrat leading-relaxed">
-                      Заказывайте на популярных маркетплейсах и получайте игрушки максимально быстро!
-                    </p>
-                  </div>
+              </div>
+
+              {/* Yandex Map */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <h3 className="text-xl font-montserrat font-semibold text-white mb-4 text-center">
+                  🗺️ Как нас найти
+                </h3>
+                <div className="rounded-lg overflow-hidden h-64 bg-gray-200">
+                  <YandexMap 
+                    address="Shosseynaya ulitsa, 48Ес2, gorodskoy posyolok Yanino-1, Zanevskoye gorodskoye poseleniye, Vsevolozhckiy District, Leningrad Region"
+                    className="rounded-lg"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Contact Button */}
+      <ContactButton />
     </div>
   )
 }
