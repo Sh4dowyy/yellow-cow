@@ -207,12 +207,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
                 </Link>
               )}
 
-              <Link
-                href="/about"
-                                    className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/about") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
-              >
-                О нас
-              </Link>
+
             </nav>
 
             {/* Search Bar */}
@@ -316,13 +311,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
               </form>
             </div>
 
-            <Link
-              href="/about"
-                                  className={`block text-base font-medium font-montserrat ${isActive("/about") ? "text-sky-500" : "text-gray-700"}`}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              О нас
-            </Link>
+
 
             {isAuthenticated && (
               <Link

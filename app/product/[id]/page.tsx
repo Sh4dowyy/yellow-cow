@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import ContactButton from "@/components/contact-button"
 import { supabase } from "@/utils/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingBag, Package, CheckCircle, XCircle } from "lucide-react";
@@ -205,9 +206,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       <Image 
                         src="/logos/wildberries-logo.svg" 
                         alt="Wildberries" 
-                        width={24} 
-                        height={24}
-                        className="object-contain bg-white rounded p-1 mr-2"
+                        width={32} 
+                        height={32}
+                        className="object-contain bg-white rounded p-1 mr-3"
                       />
                       Wildberries
                     </Button>
@@ -224,9 +225,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       <Image 
                         src="/logos/ozon-logo.svg" 
                         alt="Ozon" 
-                        width={24} 
-                        height={24}
-                        className="object-contain bg-white rounded p-1 mr-2"
+                        width={32} 
+                        height={32}
+                        className="object-contain bg-white rounded p-1 mr-3"
                       />
                       Ozon
                     </Button>
@@ -237,6 +238,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+
+      {/* Contact Button */}
+      <ContactButton />
     </div>
   )
 }

@@ -25,7 +25,9 @@ interface Category {
   name: string
 }
 
-const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
+
+
+const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: () => void, refreshCategories?: () => void }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -43,7 +45,7 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [refreshCategories]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -281,11 +283,166 @@ const ProductForm = ({ onProductAdded }: { onProductAdded?: () => void }) => {
   );
 };
 
+const CategoryManagement = ({ onCategoryChanged }: { onCategoryChanged?: () => void }) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name')
+      .order('name');
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching categories:", error);
+    } else {
+      setCategories(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleAddCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .insert([{ name: categoryName }]);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Error adding category:", error);
+        alert('Не удалось добавить категорию');
+      } else {
+        setCategoryName('');
+        alert('Категория успешно добавлена!');
+        fetchCategories(); // Refresh the list
+        if (onCategoryChanged) {
+          onCategoryChanged();
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error:', error);
+      alert('Произошла ошибка');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`Вы уверены, что хотите удалить категорию "${name}"? Это действие нельзя отменить.`)) {
+      try {
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error deleting category:", error);
+          alert('Не удалось удалить категорию. Возможно, к ней привязаны товары.');
+        } else {
+          alert('Категория успешно удалена!');
+          fetchCategories(); // Refresh the list
+          if (onCategoryChanged) {
+            onCategoryChanged();
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error:', error);
+        alert('Произошла ошибка при удалении категории');
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Add Category Form */}
+      <div className="bg-gray-50 p-6 rounded-lg border">
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">
+          ➕ Добавить новую категорию
+        </h3>
+        <form onSubmit={handleAddCategory} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700" htmlFor="categoryName">
+              Название категории
+            </label>
+            <input
+              type="text"
+              id="categoryName"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              placeholder="Введите название категории"
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={isSubmitting || !categoryName.trim()}
+            className="w-full bg-green-600 text-white font-montserrat font-bold py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400"
+          >
+            {isSubmitting ? 'Добавление категории...' : 'Добавить категорию'}
+          </button>
+        </form>
+      </div>
+
+      {/* Categories List */}
+      <div>
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">
+          📋 Существующие категории
+        </h3>
+        {loading ? (
+          <div className="text-center py-4">Загрузка категорий...</div>
+        ) : (
+          <div className="space-y-4">
+            {categories.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <p className="font-montserrat">Категории не найдены</p>
+                <p className="text-sm mt-1">Добавьте первую категорию выше</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {categories.map((category) => (
+                  <div key={category.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                    <div>
+                      <h4 className="font-montserrat font-semibold text-gray-800">{category.name}</h4>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(category.id, category.name)}
+                      className="font-montserrat"
+                    >
+                      Удалить
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [products, setProducts] = useState<Product[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
@@ -366,9 +523,10 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="add" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
           <TabsTrigger value="add">Добавить товар</TabsTrigger>
           <TabsTrigger value="manage">Управление товарами</TabsTrigger>
+          <TabsTrigger value="categories">Управление категориями</TabsTrigger>
         </TabsList>
 
         <TabsContent value="add">
@@ -378,7 +536,10 @@ export default function AdminPage() {
               <CardDescription>Заполните форму для добавления нового товара в каталог</CardDescription>
             </CardHeader>
             <CardContent>
-              <ProductForm onProductAdded={handleProductDeleted} />
+              <ProductForm 
+                onProductAdded={handleProductDeleted} 
+                refreshCategories={() => setRefreshKey(prev => prev + 1)}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -391,6 +552,20 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <ProductList products={products} onProductDeleted={handleProductDeleted} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление категориями</CardTitle>
+              <CardDescription>Добавление новых категорий и управление существующими</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CategoryManagement onCategoryChanged={() => {
+                setRefreshKey(prev => prev + 1);
+              }} />
             </CardContent>
           </Card>
         </TabsContent>
