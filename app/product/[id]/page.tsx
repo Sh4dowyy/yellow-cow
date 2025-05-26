@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import ContactButton from "@/components/contact-button"
+import ProductCard from "@/components/product-card"
 import { supabase } from "@/utils/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ShoppingBag, Package, CheckCircle, XCircle } from "lucide-react";
@@ -17,15 +18,21 @@ interface Product {
   category_id: string;
   in_stock: boolean;
   image_url: string;
+  image_urls?: string[]; // Дополнительные изображения
   wb_url: string;
   ozon_url: string;
   category_name?: string;
+  sku?: string; // Артикул
+  age_range?: string; // Возраст
+  manufacturer?: string; // Фирма производителя
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,8 +50,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           category_id,
           in_stock,
           image_url,
+          image_urls,
           wb_url,
           ozon_url,
+          sku,
+          age_range,
+          manufacturer,
           categories (
             name
           )
@@ -57,10 +68,43 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         setError("Failed to load product.");
       } else {
         // Set the product data with category name
-        setProduct({
+        const productData = {
           ...data,
           category_name: (data.categories as any)?.name || "Неизвестная категория"
-        });
+        };
+        setProduct(productData);
+
+        // Fetch recommended products from the same category
+        const { data: recommendedData } = await supabase
+          .from('products')
+          .select(`
+            id,
+            name,
+            description,
+            category_id,
+            in_stock,
+            image_url,
+            image_urls,
+            wb_url,
+            ozon_url,
+            sku,
+            age_range,
+            manufacturer,
+            categories (
+              name
+            )
+          `)
+          .eq('category_id', productData.category_id)
+          .neq('id', id)
+          .limit(4);
+
+        if (recommendedData) {
+          const processedRecommended = recommendedData.map(item => ({
+            ...item,
+            category_name: (item.categories as any)?.name || "Неизвестная категория"
+          }));
+          setRecommendedProducts(processedRecommended);
+        }
       }
       setLoading(false);
     };
@@ -111,6 +155,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     );
   }
 
+  // Создаем массив всех изображений (основное + до 5 дополнительных)
+  const allImages = [
+    product.image_url,
+    ...(product.image_urls || [])
+  ].filter(Boolean); // Убираем пустые значения
+
+  const currentImage = allImages[selectedImageIndex] || product.image_url || "/placeholder.svg";
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-white min-h-screen">
       <div className="container mx-auto px-4 py-8">
@@ -127,12 +179,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Image Section */}
+          {/* Product Image Gallery Section */}
           <div className="space-y-4">
+            {/* Main Image */}
             <Card className="p-2 bg-white shadow-lg border-0">
-              <div className="relative h-96 lg:h-[500px] bg-gradient-to-br from-gray-50 to-white rounded-lg overflow-hidden">
+              <div className="relative h-96 lg:h-[500px] bg-white rounded-lg overflow-hidden">
                 <Image
-                  src={product.image_url || "/placeholder.svg"}
+                  src={currentImage}
                   alt={product.name}
                   fill
                   className="object-contain p-6 hover:scale-105 transition-transform duration-300"
@@ -140,13 +193,52 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 />
               </div>
             </Card>
+
+            {/* Image Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {allImages.map((imageUrl, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      index === selectedImageIndex 
+                        ? 'border-blue-500 ring-2 ring-blue-200' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <Image
+                      src={imageUrl}
+                      alt={`${product.name} - изображение ${index + 1}`}
+                      fill
+                      className="object-contain p-1"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Details Section */}
           <div className="space-y-6">
-            {/* Category and Article Badges */}
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="font-montserrat">{product.category_name}</Badge>
+            {/* Category and Product Info Badges */}
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Badge variant="secondary" className="">{product.category_name}</Badge>
+              {product.sku && (
+                <Badge variant="outline" className="border-blue-200 text-blue-700">
+                  Артикул: {product.sku}
+                </Badge>
+              )}
+              {product.age_range && (
+                <Badge variant="outline" className="border-green-200 text-green-700">
+                  Возраст: {product.age_range}
+                </Badge>
+              )}
+              {product.manufacturer && (
+                <Badge variant="outline" className="border-purple-200 text-purple-700">
+                  {product.manufacturer}
+                </Badge>
+              )}
             </div>
 
             {/* Product Title */}
@@ -189,12 +281,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </Card>
 
             {/* Purchase Options */}
-                          <Card className="p-6 bg-gradient-to-r from-blue-50 to-sky-50 shadow-md border border-blue-200">
-              <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <Card className="p-6 bg-gradient-to-r from-blue-50 to-sky-50 shadow-md border border-blue-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5 text-blue-600" />
                 Где купить
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {product.wb_url && (
                   <a
                     href={product.wb_url}
@@ -202,14 +294,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                                          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-montserrat py-3 px-4 text-sm shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02]">
-                      <Image 
-                        src="/logos/wildberries-logo.svg" 
-                        alt="Wildberries" 
-                        width={32} 
-                        height={32}
-                        className="object-contain bg-white rounded p-1 mr-3"
-                      />
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 px-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
+
                       Wildberries
                     </Button>
                   </a>
@@ -221,14 +307,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-montserrat py-3 px-4 text-sm shadow-md hover:shadow-lg transition-all duration-200 group-hover:scale-[1.02]">
-                      <Image 
-                        src="/logos/ozon-logo.svg" 
-                        alt="Ozon" 
-                        width={32} 
-                        height={32}
-                        className="object-contain bg-white rounded p-1 mr-3"
-                      />
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
                       Ozon
                     </Button>
                   </a>
@@ -237,6 +316,30 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </Card>
           </div>
         </div>
+
+        {/* Recommended Products */}
+        {recommendedProducts.length > 0 && (
+          <div className="container mx-auto px-4 py-12">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                Рекомендуем также
+              </h2>
+              <p className="text-gray-600">
+                Другие товары из категории "{product?.category_name}"
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendedProducts.map((recommendedProduct) => (
+                <ProductCard 
+                  key={recommendedProduct.id} 
+                  product={recommendedProduct}
+                  width="max-w-[260px]"
+                  imageHeight="h-200"
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contact Button */}

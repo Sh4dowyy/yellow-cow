@@ -15,11 +15,15 @@ interface Product {
   name: string
   description: string
   image_url: string
+  image_urls?: string[]
   category_id: string
   is_featured: boolean
   in_stock: boolean
   wb_url: string
   ozon_url: string
+  sku?: string
+  age_range?: string
+  manufacturer?: string
 }
 
 interface Category {
@@ -47,6 +51,9 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     image_url: '',
     wb_url: '',
     ozon_url: '',
+    sku: '',
+    age_range: '',
+    manufacturer: '',
   })
   const [editImageFile, setEditImageFile] = useState<File | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -61,7 +68,10 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
   useEffect(() => {
     const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (product.manufacturer && product.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (product.age_range && product.age_range.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     setFilteredProducts(filtered)
   }, [searchTerm, products])
@@ -115,6 +125,9 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       image_url: product.image_url,
       wb_url: product.wb_url || '',
       ozon_url: product.ozon_url || '',
+      sku: product.sku || '',
+      age_range: product.age_range || '',
+      manufacturer: product.manufacturer || '',
     })
     setEditImageFile(null)
     setIsEditDialogOpen(true)
@@ -207,7 +220,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
         <Input
           type="text"
-          placeholder="Поиск товаров по названию..."
+          placeholder="Поиск по названию, артикулу, производителю..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -224,59 +237,62 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg">
-              <div className="relative h-48 bg-sky-100">
-                <Image 
-                  src={product.image_url || "/placeholder.svg"} 
-                  alt={product.name} 
-                  fill 
-                  className="object-contain p-4" 
-                />
-                {product.is_featured && (
-                                      <div className="absolute top-2 right-2 bg-sky-400 text-white px-2 py-1 rounded-full text-xs font-montserrat font-bold">
-                    Популярное
+            <div key={product.id} className="relative group">
+              <div className="overflow-hidden transition-all duration-300 hover:shadow-lg max-w-xs mx-auto bg-white rounded-lg">
+                <div className="relative h-56 bg-white">
+                  <Image 
+                    src={product.image_url || "/placeholder.svg"} 
+                    alt={product.name} 
+                    fill 
+                    className="object-contain p-4" 
+                  />
+                  {product.is_featured && (
+                    <div className="absolute top-2 right-2 bg-sky-400 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      Популярное
+                    </div>
+                  )}
+                  {!product.in_stock && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      Нет в наличии
+                    </div>
+                  )}
+                </div>
+                
+                <div className="p-4 pb-2 bg-sky-100">
+                  <div className="text-left mb-3">
+                    <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">
+                      {product.name}
+                    </h3>
                   </div>
-                )}
-                {!product.in_stock && (
-                  <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-montserrat font-bold">
-                    Нет в наличии
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-600 bg-white/50 px-2 py-1 rounded-full inline-block">
+                      {getCategoryName(product.category_id)}
+                    </p>
                   </div>
-                )}
+                </div>
+                
+                <div className="p-4 pt-0 pb-4 flex justify-between gap-2 bg-sky-100">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={() => handleEdit(product)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Редактировать
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={() => handleDelete(product.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Удалить
+                  </Button>
+                </div>
               </div>
-              
-              <CardContent className="p-4">
-                <h3 className="text-lg font-montserrat font-semibold mb-2 text-gray-800 line-clamp-1">
-                  {product.name}
-                </h3>
-                <p className="text-sm font-montserrat text-gray-600 mb-2 line-clamp-2">
-                  {product.description}
-                </p>
-                <p className="text-xs font-montserrat text-gray-500">
-                  Категория: {getCategoryName(product.category_id)}
-                </p>
-              </CardContent>
-              
-              <CardFooter className="p-4 pt-0 flex justify-between gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50"
-                  onClick={() => handleEdit(product)}
-                >
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Редактировать
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => handleDelete(product.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Удалить
-                </Button>
-              </CardFooter>
-            </Card>
+            </div>
           ))}
         </div>
       )}
@@ -419,6 +435,45 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.ozon_url}
                 onChange={handleEditFormChange}
                 placeholder="Введите ссылку на Ozon"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-sku">
+                Артикул
+              </label>
+              <Input
+                id="edit-sku"
+                name="sku"
+                value={editFormData.sku}
+                onChange={handleEditFormChange}
+                placeholder="Введите артикул товара"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-age-range">
+                Возраст
+              </label>
+              <Input
+                id="edit-age-range"
+                name="age_range"
+                value={editFormData.age_range}
+                onChange={handleEditFormChange}
+                placeholder="Например: 3-7 лет"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-manufacturer">
+                Производитель
+              </label>
+              <Input
+                id="edit-manufacturer"
+                name="manufacturer"
+                value={editFormData.manufacturer}
+                onChange={handleEditFormChange}
+                placeholder="Введите название производителя"
               />
             </div>
             

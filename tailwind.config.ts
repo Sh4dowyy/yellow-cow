@@ -21,10 +21,11 @@ const config = {
     extend: {
       fontFamily: {
         'montserrat': ['var(--font-montserrat)', 'Helvetica Neue', 'Arial', 'system-ui', 'sans-serif'],
-        'sans': ['var(--font-montserrat)', 'Helvetica Neue', 'Arial', 'system-ui', 'sans-serif'],
-        'heading': ['var(--font-montserrat)', 'Helvetica Neue', 'Arial', 'system-ui', 'sans-serif'],
-        'display': ['var(--font-montserrat)', 'Helvetica Neue', 'Arial', 'system-ui', 'sans-serif'],
-        'body': ['var(--font-montserrat)', 'Helvetica Neue', 'Arial', 'system-ui', 'sans-serif'],
+        'bebas': ['var(--font-bebas-neue)', 'Arial Black', 'Arial', 'system-ui', 'sans-serif'],
+        'sans': ['var(--font-bebas-neue)', 'Arial Black', 'Arial', 'system-ui', 'sans-serif'],
+        'heading': ['var(--font-bebas-neue)', 'Arial Black', 'Arial', 'system-ui', 'sans-serif'],
+        'display': ['var(--font-bebas-neue)', 'Arial Black', 'Arial', 'system-ui', 'sans-serif'],
+        'body': ['var(--font-bebas-neue)', 'Arial Black', 'Arial', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
