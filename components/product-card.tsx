@@ -5,36 +5,66 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, XCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { supabase } from "@/utils/supabase/supabaseClient"
 
 interface Product {
   id: string
   name: string
   description: string
   image_url: string
+  image_urls?: string[]
   category_id: string
   in_stock?: boolean
+  sku?: string
+  age_range?: string
+  manufacturer?: string
 }
 
 interface ProductCardProps {
   product: Product
+  width?: string
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, width = "max-w-[280px]" }: ProductCardProps) {
+  const [categoryName, setCategoryName] = useState<string>("")
+
+  useEffect(() => {
+    const fetchCategory = async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('name')
+        .eq('id', product.category_id)
+        .single()
+
+      if (error) {
+        console.error("Error fetching category:", error)
+        setCategoryName("Неизвестная категория")
+      } else {
+        setCategoryName(data?.name || "Неизвестная категория")
+      }
+    }
+
+    if (product.category_id) {
+      fetchCategory()
+    }
+  }, [product.category_id])
+
   return (
     <Link href={`/product/${product.id}`} className="block group">
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg group-hover:shadow-xl relative h-96 flex flex-col">
-        <div className="relative h-48 bg-sky-100">
+      <div className={`bg-white transition-all duration-300 group-hover:scale-105 relative mx-auto h-[420px] flex flex-col ${width}`}>
+        <div className="relative h-80 bg-white rounded-t-lg overflow-hidden">
           <Image 
             src={product.image_url || "/placeholder.svg"} 
             alt={product.name} 
             fill 
-            className="object-contain p-4 group-hover:scale-105 transition-transform duration-300" 
+            className="object-cover group-hover:scale-105 transition-transform duration-300" 
           />
           
           {/* Stock status badge - top right - only show when out of stock */}
           {product.in_stock !== undefined && !product.in_stock && (
             <div className="absolute top-2 right-2">
-              <Badge className="bg-red-100 text-red-700 border-red-200 font-montserrat text-xs">
+              <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
                 <XCircle className="h-3 w-3 mr-1" />
                 Нет в наличии
               </Badge>
@@ -42,22 +72,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         
-        <CardContent className="p-4 pb-12 flex-1 flex flex-col justify-between">
+        <div className="pt-2 pb-12 flex flex-col justify-between flex-grow">
           <div>
-            <h3 className="text-lg font-montserrat font-semibold mb-2 text-gray-800 group-hover:text-sky-600 transition-colors line-clamp-2">
+            <h3 className="text-base font-semibold text-gray-800 group-hover:text-blue-600 transition-colors truncate mb-1 text-left">
               {product.name}
             </h3>
-            <p className="text-sm font-montserrat text-gray-600 line-clamp-2">
-              {product.description}
+            <p className="text-sm text-gray-500 text-left">
+              {categoryName}
             </p>
           </div>
-        </CardContent>
-        
-        {/* Arrow in bottom right corner */}
-        <div className="absolute bottom-4 right-4 w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center group-hover:bg-sky-600 transition-colors shadow-md">
-          <ArrowRight className="h-4 w-4 text-white" />
         </div>
-      </Card>
+        
+        {/* Arrow icon in bottom right corner */}
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="bg-blue-500 rounded-full p-2 shadow-lg">
+            <ArrowRight className="h-4 w-4 text-white" />
+          </div>
+        </div>
+      </div>
     </Link>
   )
 }

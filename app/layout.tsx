@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Montserrat } from "next/font/google"
+import { Montserrat, Bebas_Neue } from "next/font/google"
 import "./globals.css"
 import HeaderWithSidebar from "@/components/header-with-sidebar"
 import Footer from "@/components/footer"
@@ -10,6 +10,13 @@ const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-montserrat"
+})
+
+// Подключаем Bebas Neue через Google Fonts
+const bebasNeue = Bebas_Neue({ 
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-bebas-neue"
 })
 
 export const metadata: Metadata = {
@@ -24,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className={`${montserrat.variable} bg-sky-50 font-montserrat`}>
+      <body className={`${montserrat.variable} ${bebasNeue.variable} bg-sky-50 font-bebas`}>
           <div className="flex min-h-screen flex-col">
             <HeaderWithSidebar />
             <main className="flex-1">{children}</main>

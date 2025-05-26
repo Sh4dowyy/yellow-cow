@@ -12,6 +12,7 @@ interface Product {
   name: string
   description: string
   image_url: string
+  image_urls?: string[]
   category_id: string
   in_stock: boolean
 }
@@ -27,7 +28,7 @@ export default function Home() {
     const fetchFeaturedProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, description, image_url, category_id, in_stock')
+        .select('id, name, description, image_url, image_urls, category_id, in_stock')
         .eq('is_featured', true)
 
       if (error) {
@@ -97,7 +98,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto text-center">
             {/* ARIA TOYS Logo Style */}
             <div className="mb-8">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white mb-2 tracking-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl text-white mb-2 tracking-widest">
                 <span className="inline-block bg-gradient-to-r from-sky-300 to-sky-400 bg-clip-text text-transparent">
                   ARIA
                 </span>
@@ -117,10 +118,10 @@ export default function Home() {
             
             {/* Call to Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white font-montserrat font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white tracking-wide py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
                 Открыть каталог
               </a>
-              <button onClick={() => document.getElementById('popular-toys')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white font-montserrat font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <button onClick={() => document.getElementById('popular-toys')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
                 Популярные игрушки
               </button>
             </div>
@@ -134,10 +135,10 @@ export default function Home() {
       </section>
 
       {/* Popular Toys Section */}
-      <section id="popular-toys" className="py-16 bg-gradient-to-b from-sky-50 to-white">
+      <section id="popular-toys" className="py-16 bg-white">
         <div className="container mx-auto px-4">
                       <div className="text-center mb-12">
-              <h2 className="text-4xl font-montserrat font-black text-blue-700 mb-4 tracking-tight">
+              <h2 className="text-4xl text-blue-700 mb-4 tracking-wider">
                 Популярные игрушки
               </h2>
               <p className="text-lg text-blue-600 font-montserrat font-medium">Самые любимые игрушки наших маленьких покупателей!</p>
@@ -233,7 +234,7 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-montserrat font-bold text-white mb-6">
+              <h2 className="text-3xl text-white mb-6 tracking-wider">
                 О магазине ARIA TOYS
               </h2>
               <p className="text-blue-100 font-montserrat leading-relaxed text-lg max-w-3xl mx-auto">
@@ -245,7 +246,7 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-8 items-start">
               {/* Contact Info */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-                <h3 className="text-xl font-montserrat font-semibold text-white mb-6 text-center">
+                <h3 className="text-xl text-white mb-6 text-center tracking-wide">
                   📞 Контактная информация
                 </h3>
                 <div className="space-y-4">
@@ -298,7 +299,7 @@ export default function Home() {
 
               {/* Yandex Map */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <h3 className="text-xl font-montserrat font-semibold text-white mb-4 text-center">
+                <h3 className="text-xl text-white mb-4 text-center tracking-wide">
                   🗺️ Как нас найти
                 </h3>
                 <div className="rounded-lg overflow-hidden h-64 bg-gray-200">

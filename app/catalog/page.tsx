@@ -13,7 +13,11 @@ interface Toy {
   description: string;
   category_id: string;
   image_url: string;
+  image_urls?: string[];
   in_stock: boolean;
+  sku?: string;
+  age_range?: string;
+  manufacturer?: string;
 }
 
 interface Category {
@@ -37,7 +41,7 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, in_stock');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
@@ -72,7 +76,10 @@ function CatalogContent() {
     if (searchQuery) {
       filtered = filtered.filter(toy => 
         toy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        toy.description.toLowerCase().includes(searchQuery.toLowerCase())
+        toy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (toy.sku && toy.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (toy.manufacturer && toy.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (toy.age_range && toy.age_range.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
@@ -111,7 +118,7 @@ function CatalogContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-sky-50 to-white">
+    <div className="min-h-screen" style={{background: 'linear-gradient(to bottom,rgb(255, 255, 255),rgb(255, 255, 255))'}}>
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-12 relative overflow-hidden">
         {/* Background decoration */}
@@ -172,9 +179,13 @@ function CatalogContent() {
 
         {/* Content for "Все игрушки" */}
         <TabsContent value="all" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {(searchQuery || categoryFilter ? filteredToys : toys).map((toy) => (
-              <ProductCard key={toy.id} product={toy} />
+              <ProductCard 
+                key={toy.id} 
+                product={toy} 
+                width="max-w-[240px]"
+              />
             ))}
           </div>
           {(searchQuery || categoryFilter ? filteredToys : toys).length === 0 && (
@@ -192,9 +203,13 @@ function CatalogContent() {
         {/* Content for each category */}
         {categories.map((category) => (
           <TabsContent key={category.id} value={category.id} className="mt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {filteredToys.map((toy) => (
-                <ProductCard key={toy.id} product={toy} />
+                              <ProductCard 
+                key={toy.id} 
+                product={toy} 
+                width="max-w-[240px]"
+              />
               ))}
             </div>
             {filteredToys.length === 0 && (
@@ -216,7 +231,7 @@ function CatalogContent() {
 
 function CatalogFallback() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-sky-50 to-white">
+    <div className="min-h-screen" style={{background: 'linear-gradient(to bottom, #EDF1FD, #DBE3FA)'}}>
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">

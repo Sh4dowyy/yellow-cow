@@ -14,10 +14,14 @@ interface Product {
   description: string
   category_id: string
   image_url: string
+  image_urls?: string[]
   is_featured: boolean
   in_stock: boolean
   wb_url: string
   ozon_url: string
+  sku?: string
+  age_range?: string
+  manufacturer?: string
 }
 
 interface Category {
@@ -34,13 +38,16 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
     category_id: '',
     is_featured: false,
     in_stock: false,
-    image_url: '',
     wb_url: '',
     ozon_url: '',
+    sku: '',
+    age_range: '',
+    manufacturer: '',
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -73,6 +80,19 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImageFile(e.target.files[0]);
+    }
+  };
+
+  const handleAdditionalFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      if (filesArray.length > 5) {
+        alert('Можно выбрать максимум 5 дополнительных изображений');
+        // Сбрасываем значение input
+        e.target.value = '';
+        return;
+      }
+      setAdditionalImageFiles(filesArray);
     }
   };
 
@@ -112,25 +132,41 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (!imageFile) {
+      alert('Пожалуйста, выберите основное изображение');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
-      let imageUrl = formData.image_url;
+      // Upload main image
+      const imageUrl = await uploadImage(imageFile);
+      if (!imageUrl) {
+        alert('Не удалось загрузить основное изображение. Проверьте настройки Supabase Storage.');
+        setIsUploading(false);
+        return;
+      }
 
-      if (imageFile) {
-        const uploadedUrl = await uploadImage(imageFile);
-        if (uploadedUrl) {
-          imageUrl = uploadedUrl;
-        } else {
-          alert('Не удалось загрузить изображение. Проверьте настройки Supabase Storage или используйте URL изображения.');
-          setIsUploading(false);
-          return;
+      // Upload additional images
+      let additionalImageUrls: string[] = [];
+      if (additionalImageFiles.length > 0) {
+        for (const file of additionalImageFiles) {
+          const uploadedUrl = await uploadImage(file);
+          if (uploadedUrl) {
+            additionalImageUrls.push(uploadedUrl);
+          }
         }
       }
 
       const { error } = await supabase
         .from('products')
-        .insert([{ ...formData, image_url: imageUrl }]);
+        .insert([{ 
+          ...formData, 
+          image_url: imageUrl,
+          image_urls: additionalImageUrls.length > 0 ? additionalImageUrls : null
+        }]);
 
       if (error) {
         // eslint-disable-next-line no-console
@@ -144,11 +180,14 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
           category_id: '',
           is_featured: false,
           in_stock: false,
-          image_url: '',
           wb_url: '',
           ozon_url: '',
+          sku: '',
+          age_range: '',
+          manufacturer: '',
         });
         setImageFile(null);
+        setAdditionalImageFiles([]);
         alert('Игрушка успешно добавлена!');
         if (onProductAdded) {
           onProductAdded();
@@ -225,31 +264,65 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
         />
         <label className="ml-2 block text-sm font-medium text-gray-700">В наличии</label>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="image_url">URL изображения</label>
-        <input
-          type="url"
-          name="image_url"
-          value={formData.image_url}
-          onChange={handleChange}
-          placeholder="Введите URL изображения (например, с Unsplash)"
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-        />
-        <p className="text-xs text-gray-500 mt-1">Или загрузите файл:</p>
+
+      {/* Main Image Upload */}
+      <div className="border-t pt-4">
+        <h3 className="text-md font-medium text-gray-700 mb-3">Изображения</h3>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="image">
+            Основное изображение <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="file"
+            onChange={handleFileChange}
+            accept="image/*"
+            required
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          />
+          {imageFile && (
+            <p className="text-sm text-gray-600 mt-1">Выбрано: {imageFile.name}</p>
+          )}
+        </div>
+
+        {/* Additional Images Upload */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="additional_images">
+            Дополнительные изображения (максимум 5, необязательно)
+          </label>
+          <input
+            type="file"
+            multiple
+            onChange={handleAdditionalFilesChange}
+            accept="image/*"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Выберите до 5 дополнительных изображений для создания галереи
+          </p>
+          {additionalImageFiles.length > 0 && (
+            <div className="text-sm text-gray-600 mt-2">
+              <div className="flex justify-between items-center mb-1">
+                <span>Выбрано файлов: {additionalImageFiles.length}/5</span>
+                <button
+                  type="button"
+                  onClick={() => setAdditionalImageFiles([])}
+                  className="text-red-500 hover:text-red-700 text-xs underline"
+                >
+                  Очистить все
+                </button>
+              </div>
+              <div className="bg-gray-50 rounded p-2 max-h-24 overflow-y-auto">
+                <ul className="list-disc list-inside space-y-1">
+                  {Array.from(additionalImageFiles).map((file, index) => (
+                    <li key={index} className="text-xs truncate">{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="image">Загрузить изображение</label>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          accept="image/*"
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-        />
-        {imageFile && (
-          <p className="text-sm text-gray-600 mt-1">Выбрано: {imageFile.name}</p>
-        )}
-        <p className="text-xs text-gray-500 mt-1">Загруженный файл имеет приоритет над URL</p>
-      </div>
+
       <div>
         <label className="block text-sm font-medium text-gray-700" htmlFor="wb_url">Ссылка на Wildberries</label>
         <input
@@ -272,10 +345,43 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="sku">Артикул</label>
+        <input
+          type="text"
+          name="sku"
+          value={formData.sku}
+          onChange={handleChange}
+          placeholder="Введите артикул товара"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="age_range">Возраст</label>
+        <input
+          type="text"
+          name="age_range"
+          value={formData.age_range}
+          onChange={handleChange}
+          placeholder="Например: 3-7 лет"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="manufacturer">Производитель</label>
+        <input
+          type="text"
+          name="manufacturer"
+          value={formData.manufacturer}
+          onChange={handleChange}
+          placeholder="Введите название производителя"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
+      </div>
       <button 
         type="submit" 
         disabled={isUploading}
-                    className="w-full bg-blue-600 text-white font-montserrat font-bold py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+        className="w-full bg-blue-600 text-white font-montserrat font-bold py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
       >
         {isUploading ? 'Добавление игрушки...' : 'Добавить игрушку'}
       </button>
@@ -288,6 +394,8 @@ const CategoryManagement = ({ onCategoryChanged }: { onCategoryChanged?: () => v
   const [loading, setLoading] = useState(true);
   const [categoryName, setCategoryName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -335,6 +443,48 @@ const CategoryManagement = ({ onCategoryChanged }: { onCategoryChanged?: () => v
       alert('Произошла ошибка');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (id: string, name: string) => {
+    setEditingId(id);
+    setEditingName(name);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleUpdateCategory = async (id: string) => {
+    if (!editingName.trim()) {
+      alert('Название категории не может быть пустым');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .update({ name: editingName.trim() })
+        .eq('id', id);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Error updating category:", error);
+        alert('Не удалось обновить категорию');
+      } else {
+        alert('Категория успешно обновлена!');
+        setEditingId(null);
+        setEditingName('');
+        fetchCategories(); // Refresh the list
+        if (onCategoryChanged) {
+          onCategoryChanged();
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error:', error);
+      alert('Произошла ошибка при обновлении категории');
     }
   };
 
@@ -415,17 +565,60 @@ const CategoryManagement = ({ onCategoryChanged }: { onCategoryChanged?: () => v
               <div className="space-y-2">
                 {categories.map((category) => (
                   <div key={category.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-                    <div>
-                      <h4 className="font-montserrat font-semibold text-gray-800">{category.name}</h4>
+                    <div className="flex-1 mr-4">
+                      {editingId === category.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md shadow-sm p-2 font-montserrat font-semibold text-gray-800"
+                          autoFocus
+                        />
+                      ) : (
+                        <h4 className="font-montserrat font-semibold text-gray-800">{category.name}</h4>
+                      )}
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(category.id, category.name)}
-                      className="font-montserrat"
-                    >
-                      Удалить
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {editingId === category.id ? (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleUpdateCategory(category.id)}
+                            className="font-montserrat"
+                          >
+                            Сохранить
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            className="font-montserrat"
+                          >
+                            Отмена
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(category.id, category.name)}
+                            className="font-montserrat"
+                          >
+                            Изменить
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(category.id, category.name)}
+                            className="font-montserrat"
+                          >
+                            Удалить
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -464,7 +657,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, category_id, is_featured, in_stock, wb_url, ozon_url')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -484,7 +677,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, category_id, is_featured, in_stock, wb_url, ozon_url')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer')
 
     if (productsError) {
       // eslint-disable-next-line no-console
