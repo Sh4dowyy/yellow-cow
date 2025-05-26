@@ -334,7 +334,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   key={recommendedProduct.id} 
                   product={recommendedProduct}
                   width="max-w-[260px]"
-                  imageHeight="h-200"
                 />
               ))}
             </div>
