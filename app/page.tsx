@@ -135,7 +135,7 @@ export default function Home() {
       </section>
 
       {/* Popular Toys Section */}
-      <section id="popular-toys" className="py-16 bg-white">
+      <section id="popular-toys" className="py-24 bg-white">
         <div className="container mx-auto px-4">
                       <div className="text-center mb-12">
               <h2 className="text-4xl text-blue-700 mb-4 tracking-wider">
@@ -157,11 +157,11 @@ export default function Home() {
                   {/* Create pages of 3 toys each */}
                   {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
                     <div key={pageIndex} className="w-full flex-shrink-0">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 py-8">
                         {popularToys
                           .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
                           .map((toy) => (
-                            <ProductCard key={toy.id} product={toy} />
+                            <ProductCard key={toy.id} product={toy} width="max-w-[240px]" />
                           ))}
                       </div>
                     </div>
