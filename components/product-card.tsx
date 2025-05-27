@@ -52,8 +52,8 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
 
   return (
     <Link href={`/product/${product.id}`} className="block group">
-      <div className={`bg-white transition-all duration-300 group-hover:scale-105 relative mx-auto h-[420px] flex flex-col ${width}`}>
-        <div className="relative h-80 bg-white rounded-t-lg overflow-hidden">
+      <div className={`bg-white transition-all duration-300 group-hover:scale-105 relative mx-auto h-[400px] flex flex-col ${width}`}>
+        <div className="relative h-80 bg-white rounded-lg overflow-hidden">
           <Image 
             src={product.image_url || "/placeholder.svg"} 
             alt={product.name} 
@@ -72,12 +72,17 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
           )}
         </div>
         
-        <div className="pt-2 pb-12 flex flex-col justify-between flex-grow">
+        <div className="pt-2 pb-0 flex flex-col justify-between flex-grow">
           <div>
             <h3 className="text-base font-semibold text-gray-800 group-hover:text-blue-600 transition-colors truncate mb-1 text-left">
               {product.name}
             </h3>
-            <p className="text-sm text-gray-500 text-left">
+            <p className="text-sm text-left border border-gray-300 px-2 py-1 inline-block"
+              style={{
+                backgroundColor: '#DBE3FA',
+                borderRadius: '10px'
+              }}
+            >
               {categoryName}
             </p>
           </div>
@@ -85,7 +90,7 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
         
         {/* Arrow icon in bottom right corner */}
         <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="bg-blue-500 rounded-full p-2 shadow-lg">
+          <div className="bg-blue-500 rounded-lg p-2 shadow-lg">
             <ArrowRight className="h-4 w-4 text-white" />
           </div>
         </div>

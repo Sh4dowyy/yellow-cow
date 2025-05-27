@@ -278,28 +278,29 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
             </div>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile search button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-sky-500 focus:outline-none transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
+              aria-label="Открыть поиск"
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? <X size={24} className="text-gray-700" /> : <Search size={24} className="text-gray-700" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Search Panel */}
         {isMenuOpen && (
-          <nav className="md:hidden mt-4 pb-4 space-y-4 border-t border-gray-200 pt-4">
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
             {/* Mobile поиск */}
-            <div className="relative" ref={searchRef}>
+            <div className="relative mb-4" ref={searchRef}>
               <form onSubmit={handleSearchSubmit} className="relative">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     type="text"
-                    placeholder="Поиск..."
+                    placeholder="Поиск игрушек..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value)
@@ -309,20 +310,73 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
                   />
                 </div>
               </form>
+
+              {/* Результаты поиска для мобильных */}
+              {showSearchResults && (searchResults.length > 0 || isSearching) && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                  {isSearching ? (
+                    <div className="p-4 text-center text-gray-500 font-montserrat">
+                      Поиск...
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      {searchResults.map((result) => (
+                        <button
+                          key={`${result.type}-${result.id}`}
+                          onClick={() => {
+                            handleResultClick(result)
+                            setIsMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900 font-montserrat">{result.name}</p>
+                              {result.description && (
+                                <p className="text-sm text-gray-500 font-montserrat line-clamp-1">{result.description}</p>
+                              )}
+                              {result.category_name && (
+                                <p className="text-xs text-sky-600 font-montserrat">{result.category_name}</p>
+                              )}
+                            </div>
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-montserrat">
+                              {result.type === 'product' ? 'Товар' : 'Категория'}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                      {searchQuery.trim() && (
+                        <button
+                          onClick={() => {
+                            handleSearchSubmit({ preventDefault: () => {} } as React.FormEvent)
+                            setIsMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-sky-50 border-t border-gray-200 text-sky-600 font-medium font-montserrat"
+                        >
+                          Показать все результаты для "{searchQuery}"
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 font-montserrat">
+                      Ничего не найдено
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-
-
+            {/* Админка */}
             {isAuthenticated && (
               <Link
                 href="/admin"
-                                    className={`block text-base font-medium font-montserrat ${isActive("/admin") ? "text-sky-500" : "text-gray-700"}`}
+                className={`block text-base font-medium font-montserrat ${isActive("/admin") ? "text-sky-500" : "text-gray-700"}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Админка
               </Link>
             )}
-          </nav>
+          </div>
         )}
       </div>
     </header>
