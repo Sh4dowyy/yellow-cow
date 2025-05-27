@@ -17,7 +17,8 @@ export default function ProductForm() {
     name: "",
     description: "",
     category: "",
-    image: null as File | null,
+    mainImage: null as File | null,
+    additionalImages: [] as File[],
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -29,9 +30,16 @@ export default function ProductForm() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({ ...prev, image: e.target.files![0] }))
+      setFormData((prev) => ({ ...prev, mainImage: e.target.files![0] }))
+    }
+  }
+
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files)
+      setFormData((prev) => ({ ...prev, additionalImages: files }))
     }
   }
 
@@ -40,7 +48,7 @@ export default function ProductForm() {
     setIsLoading(true)
 
     try {
-      // In a real app, you would upload the image and save the product data
+      // In a real app, you would upload the images and save the product data
       // For demo purposes, we'll just simulate an API call
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
@@ -55,8 +63,15 @@ export default function ProductForm() {
         name: "",
         description: "",
         category: "",
-        image: null,
+        mainImage: null,
+        additionalImages: [],
       })
+      
+      // Reset file inputs
+      const mainImageInput = document.getElementById("mainImage") as HTMLInputElement
+      const additionalImagesInput = document.getElementById("additionalImages") as HTMLInputElement
+      if (mainImageInput) mainImageInput.value = ""
+      if (additionalImagesInput) additionalImagesInput.value = ""
     } catch (error) {
       toast({
         title: "Ошибка",
@@ -87,7 +102,6 @@ export default function ProductForm() {
         />
       </div>
 
-
       <div className="grid gap-2">
         <Label htmlFor="category">Категория</Label>
         <Select value={formData.category} onValueChange={(value) => handleSelectChange("category", value)}>
@@ -106,8 +120,34 @@ export default function ProductForm() {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="image">Изображение товара</Label>
-        <Input id="image" type="file" accept="image/*" onChange={handleFileChange} required />
+        <Label htmlFor="mainImage">Основное изображение (превью)</Label>
+        <Input 
+          id="mainImage" 
+          type="file" 
+          accept="image/*" 
+          onChange={handleMainImageChange} 
+          required 
+        />
+        <p className="text-sm text-gray-600">Это изображение будет отображаться в карточке товара</p>
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="additionalImages">Дополнительные изображения</Label>
+        <Input 
+          id="additionalImages" 
+          type="file" 
+          accept="image/*" 
+          multiple 
+          onChange={handleAdditionalImagesChange}
+        />
+        <p className="text-sm text-gray-600">
+          Эти изображения будут показываться только на странице товара (до 5 изображений)
+        </p>
+        {formData.additionalImages.length > 0 && (
+          <p className="text-sm text-blue-600">
+            Выбрано дополнительных изображений: {formData.additionalImages.length}
+          </p>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>

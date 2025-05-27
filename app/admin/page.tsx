@@ -22,6 +22,8 @@ interface Product {
   sku?: string
   age_range?: string
   manufacturer?: string
+  gender?: string
+  is_new?: boolean
 }
 
 interface Category {
@@ -43,6 +45,8 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
     sku: '',
     age_range: '',
     manufacturer: '',
+    gender: 'all',
+    is_new: false,
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -185,6 +189,8 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
           sku: '',
           age_range: '',
           manufacturer: '',
+          gender: 'all',
+          is_new: false,
         });
         setImageFile(null);
         setAdditionalImageFiles([]);
@@ -263,6 +269,16 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
         />
         <label className="ml-2 block text-sm font-medium text-gray-700">В наличии</label>
+      </div>
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          name="is_new"
+          checked={formData.is_new}
+          onChange={handleChange}
+          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+        <label className="ml-2 block text-sm font-medium text-gray-700">Новинка</label>
       </div>
 
       {/* Main Image Upload */}
@@ -368,15 +384,28 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="manufacturer">Производитель</label>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="manufacturer">Бренд</label>
         <input
           type="text"
           name="manufacturer"
           value={formData.manufacturer}
           onChange={handleChange}
-          placeholder="Введите название производителя"
+          placeholder="Введите название бренда"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="gender">Пол</label>
+        <select
+          name="gender"
+          value={formData.gender}
+          onChange={handleChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        >
+          <option value="all">Для всех</option>
+          <option value="boys">Мальчики</option>
+          <option value="girls">Девочки</option>
+        </select>
       </div>
       <button 
         type="submit" 
@@ -657,7 +686,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, gender, is_new')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -677,7 +706,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, gender, is_new')
 
     if (productsError) {
       // eslint-disable-next-line no-console

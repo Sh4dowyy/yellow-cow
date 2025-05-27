@@ -18,6 +18,7 @@ interface Toy {
   sku?: string;
   age_range?: string;
   manufacturer?: string;
+  is_new?: boolean;
 }
 
 interface Category {
@@ -41,13 +42,19 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer, is_new');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
         setError("Failed to load toys.");
       } else {
-        setToys(toysData);
+        // Сортируем так, чтобы новинки были первыми
+        const sortedData = toysData.sort((a: Toy, b: Toy) => {
+          if (a.is_new && !b.is_new) return -1
+          if (!a.is_new && b.is_new) return 1
+          return 0
+        })
+        setToys(sortedData);
       }
 
       const { data: categoriesData, error: categoriesError } = await supabase

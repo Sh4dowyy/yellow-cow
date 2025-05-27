@@ -25,6 +25,8 @@ interface Product {
   sku?: string; // Артикул
   age_range?: string; // Возраст
   manufacturer?: string; // Фирма производителя
+  gender?: string; // Пол
+  is_new?: boolean; // Новинка
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +58,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           sku,
           age_range,
           manufacturer,
+          gender,
+          is_new,
           categories (
             name
           )
@@ -90,6 +94,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             sku,
             age_range,
             manufacturer,
+            gender,
+            is_new,
             categories (
               name
             )
@@ -155,13 +161,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  // Создаем массив всех изображений (основное + до 5 дополнительных)
-  const allImages = [
-    product.image_url,
-    ...(product.image_urls || [])
-  ].filter(Boolean); // Убираем пустые значения
+  // Используем только дополнительные изображения для галереи (без основного)
+  const allImages = (product.image_urls || []).filter(Boolean);
 
-  const currentImage = allImages[selectedImageIndex] || product.image_url || "/placeholder.svg";
+  // Если есть дополнительные изображения, используем их, иначе показываем основное
+  const currentImage = allImages.length > 0 
+    ? allImages[selectedImageIndex] 
+    : product.image_url || "/placeholder.svg";
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-white min-h-screen">
@@ -222,21 +228,33 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           {/* Product Details Section */}
           <div className="space-y-6">
             {/* Category and Product Info Badges */}
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant="secondary" className="">{product.category_name}</Badge>
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <Badge variant="secondary" className="text-base px-4 py-2">{product.category_name}</Badge>
               {product.sku && (
-                <Badge variant="outline" className="border-blue-200 text-blue-700">
+                <Badge variant="outline" className="border-blue-200 text-blue-700 text-base px-4 py-2">
                   Артикул: {product.sku}
                 </Badge>
               )}
               {product.age_range && (
-                <Badge variant="outline" className="border-green-200 text-green-700">
+                <Badge variant="outline" className="border-green-200 text-green-700 text-base px-4 py-2">
                   Возраст: {product.age_range}
                 </Badge>
               )}
               {product.manufacturer && (
-                <Badge variant="outline" className="border-purple-200 text-purple-700">
+                <Badge variant="outline" className="border-purple-200 text-purple-700 text-base px-4 py-2">
                   {product.manufacturer}
+                </Badge>
+              )}
+              {product.gender && (
+                <Badge variant="outline" className="border-pink-200 text-pink-700 text-base px-4 py-2">
+                  {product.gender === 'boys' ? 'Для мальчиков' : 
+                   product.gender === 'girls' ? 'Для девочек' : 
+                   'Для всех'}
+                </Badge>
+              )}
+              {product.is_new && (
+                <Badge variant="outline" className="border-green-200 text-green-700 text-base px-4 py-2">
+                  Новинка
                 </Badge>
               )}
             </div>
@@ -294,8 +312,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 px-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
-
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 px-12 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
                       Wildberries
                     </Button>
                   </a>
@@ -307,7 +324,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6 px-8 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
                       Ozon
                     </Button>
                   </a>

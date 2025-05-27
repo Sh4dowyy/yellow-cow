@@ -15,6 +15,7 @@ interface Product {
   image_urls?: string[]
   category_id: string
   in_stock: boolean
+  is_new?: boolean
 }
 
 export default function Home() {
@@ -28,14 +29,20 @@ export default function Home() {
     const fetchFeaturedProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, in_stock')
+        .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new')
         .eq('is_featured', true)
 
       if (error) {
         console.error("Error fetching featured products:", error)
         setError("Failed to load popular toys.")
       } else {
-        setPopularToys(data as Product[])
+        // Сортируем так, чтобы новинки были первыми
+        const sortedData = (data as Product[]).sort((a, b) => {
+          if (a.is_new && !b.is_new) return -1
+          if (!a.is_new && b.is_new) return 1
+          return 0
+        })
+        setPopularToys(sortedData)
       }
       setLoading(false)
     }
@@ -127,7 +134,7 @@ export default function Home() {
             </div>
             
             <div className="text-center">
-              <p className="text-blue-100 font-montserrat font-medium mb-2">Найдите идеальную игрушку для вашего малыша!</p>
+              <p className="text-blue-100 font-montserrat font-medium mb-2">Найдите идеальную игрушку для вашего ребенка!</p>
               <p className="text-blue-200 font-montserrat text-sm">Используйте поиск или выберите категорию в меню</p>
             </div>
           </div>
