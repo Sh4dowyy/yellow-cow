@@ -24,6 +24,8 @@ interface Product {
   sku?: string
   age_range?: string
   manufacturer?: string
+  gender?: string
+  is_new?: boolean
 }
 
 interface Category {
@@ -54,8 +56,11 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     sku: '',
     age_range: '',
     manufacturer: '',
+    gender: '',
+    is_new: false,
   })
   const [editImageFile, setEditImageFile] = useState<File | null>(null)
+  const [editAdditionalImageFiles, setEditAdditionalImageFiles] = useState<File[]>([])
   const [isUpdating, setIsUpdating] = useState(false)
 
   useEffect(() => {
@@ -73,7 +78,15 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       (product.manufacturer && product.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (product.age_range && product.age_range.toLowerCase().includes(searchTerm.toLowerCase()))
     )
-    setFilteredProducts(filtered)
+    
+    // Сортируем так, чтобы новинки были первыми
+    const sorted = filtered.sort((a, b) => {
+      if (a.is_new && !b.is_new) return -1
+      if (!a.is_new && b.is_new) return 1
+      return 0
+    })
+    
+    setFilteredProducts(sorted)
   }, [searchTerm, products])
 
   const fetchCategories = async () => {
@@ -128,8 +141,11 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       sku: product.sku || '',
       age_range: product.age_range || '',
       manufacturer: product.manufacturer || '',
+      gender: product.gender || '',
+      is_new: product.is_new || false,
     })
     setEditImageFile(null)
+    setEditAdditionalImageFiles([])
     setIsEditDialogOpen(true)
   }
 
@@ -145,6 +161,18 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setEditImageFile(e.target.files[0])
+    }
+  }
+
+  const handleEditAdditionalFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files)
+      if (filesArray.length > 5) {
+        alert('Можно выбрать максимум 5 дополнительных изображений')
+        e.target.value = ''
+        return
+      }
+      setEditAdditionalImageFiles(filesArray)
     }
   }
 
@@ -177,21 +205,39 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
     try {
       let imageUrl = editFormData.image_url
+      let additionalImageUrls = editingProduct.image_urls || []
 
+      // Upload new main image if selected
       if (editImageFile) {
         const uploadedUrl = await uploadImage(editImageFile)
         if (uploadedUrl) {
           imageUrl = uploadedUrl
         } else {
-          alert('Failed to upload image')
+          alert('Failed to upload main image')
           setIsUpdating(false)
           return
         }
       }
 
+      // Upload new additional images if selected
+      if (editAdditionalImageFiles.length > 0) {
+        const newAdditionalUrls: string[] = []
+        for (const file of editAdditionalImageFiles) {
+          const uploadedUrl = await uploadImage(file)
+          if (uploadedUrl) {
+            newAdditionalUrls.push(uploadedUrl)
+          }
+        }
+        additionalImageUrls = newAdditionalUrls
+      }
+
       const { error } = await supabase
         .from('products')
-        .update({ ...editFormData, image_url: imageUrl })
+        .update({ 
+          ...editFormData, 
+          image_url: imageUrl,
+          image_urls: additionalImageUrls.length > 0 ? additionalImageUrls : null
+        })
         .eq('id', editingProduct.id)
 
       if (error) {
@@ -251,8 +297,14 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                       Популярное
                     </div>
                   )}
+                  {product.is_new && (
+                    <div className="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      Новинка
+                    </div>
+                  )}
+                  
                   {!product.in_stock && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    <div className="absolute bottom-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                       Нет в наличии
                     </div>
                   )}
@@ -299,7 +351,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Редактировать товар</DialogTitle>
           </DialogHeader>
@@ -381,11 +433,24 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   В наличии
                 </label>
               </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="edit-is-new"
+                  name="is_new"
+                  checked={editFormData.is_new}
+                  onChange={handleEditFormChange}
+                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="edit-is-new" className="ml-2 block text-sm font-medium text-gray-700">
+                  Новинка
+                </label>
+              </div>
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700" htmlFor="edit-image">
-                Изображение товара
+                Основное изображение (превью)
               </label>
               <input
                 type="file"
@@ -394,19 +459,80 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 accept="image/*"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               />
+              <p className="text-xs text-gray-500 mt-1">Это изображение будет отображаться в карточке товара</p>
               {editImageFile && (
                 <p className="text-sm text-gray-600 mt-1">Выбрано: {editImageFile.name}</p>
               )}
               {editFormData.image_url && !editImageFile && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600 mb-1">Текущее изображение:</p>
+                  <p className="text-sm text-gray-600 mb-1">Текущее основное изображение:</p>
                   <div className="relative h-20 w-20 bg-gray-100 rounded">
                     <Image
                       src={editFormData.image_url}
-                      alt="Current image"
+                      alt="Current main image"
                       fill
                       className="object-contain p-1 rounded"
                     />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-additional-images">
+                Дополнительные изображения
+              </label>
+              <input
+                type="file"
+                id="edit-additional-images"
+                multiple
+                onChange={handleEditAdditionalFilesChange}
+                accept="image/*"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Эти изображения будут показываться в галерее на странице товара (максимум 5)
+              </p>
+              {editAdditionalImageFiles.length > 0 && (
+                <div className="text-sm text-gray-600 mt-2">
+                  <div className="flex justify-between items-center mb-1">
+                    <span>Выбрано файлов: {editAdditionalImageFiles.length}/5</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditAdditionalImageFiles([])}
+                      className="text-red-500 hover:text-red-700 text-xs underline"
+                    >
+                      Очистить все
+                    </button>
+                  </div>
+                  <div className="bg-gray-50 rounded p-2 max-h-24 overflow-y-auto">
+                    <ul className="list-disc list-inside space-y-1">
+                      {Array.from(editAdditionalImageFiles).map((file, index) => (
+                        <li key={index} className="text-xs truncate">{file.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              {editingProduct?.image_urls && editingProduct.image_urls.length > 0 && editAdditionalImageFiles.length === 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 mb-1">Текущие дополнительные изображения ({editingProduct.image_urls.length}):</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {editingProduct.image_urls.slice(0, 3).map((url, index) => (
+                      <div key={index} className="relative h-16 w-16 bg-gray-100 rounded">
+                        <Image
+                          src={url}
+                          alt={`Additional image ${index + 1}`}
+                          fill
+                          className="object-contain p-1 rounded"
+                        />
+                      </div>
+                    ))}
+                    {editingProduct.image_urls.length > 3 && (
+                      <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-xs text-gray-600">+{editingProduct.image_urls.length - 3}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -475,6 +601,23 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 onChange={handleEditFormChange}
                 placeholder="Введите название производителя"
               />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-gender">
+                Пол
+              </label>
+              <select
+                id="edit-gender"
+                name="gender"
+                value={editFormData.gender}
+                onChange={handleEditFormChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              >
+                <option value="all">Для всех</option>
+                <option value="boys">Мальчики</option>
+                <option value="girls">Девочки</option>
+              </select>
             </div>
             
             <div className="flex justify-end gap-2 pt-4">
