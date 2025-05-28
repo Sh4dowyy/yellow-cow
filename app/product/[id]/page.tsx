@@ -312,7 +312,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 px-12 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 px-12 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl tracking-wider">
                       Wildberries
                     </Button>
                   </a>
@@ -324,7 +324,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     rel="noopener noreferrer"
                     className="block group"
                   >
-                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6 px-8 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl">
+                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-6 px-8 text-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-[1.02] rounded-xl tracking-wider">
                       Ozon
                     </Button>
                   </a>
