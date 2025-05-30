@@ -69,7 +69,7 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
           
           <div className="flex justify-between items-center">
             <div className="flex gap-2">
-              <p className="text-sm text-left border border-gray-300 px-2 py-1"
+              <p className="text-sm text-left border border-gray-300 px-2 py-1 tracking-wide"
                 style={{
                   backgroundColor: '#DBE3FA',
                   borderRadius: '10px'
