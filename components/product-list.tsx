@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Pencil, Trash2, Search } from "lucide-react"
+import { Pencil, Trash2, Search, X, GripVertical } from "lucide-react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 
 interface Product {
@@ -62,6 +62,8 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
   const [editImageFile, setEditImageFile] = useState<File | null>(null)
   const [editAdditionalImageFiles, setEditAdditionalImageFiles] = useState<File[]>([])
   const [isUpdating, setIsUpdating] = useState(false)
+  const [existingAdditionalImages, setExistingAdditionalImages] = useState<string[]>([])
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     fetchCategories()
@@ -146,6 +148,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     })
     setEditImageFile(null)
     setEditAdditionalImageFiles([])
+    setExistingAdditionalImages(product.image_urls || [])
     setIsEditDialogOpen(true)
   }
 
@@ -174,6 +177,55 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       }
       setEditAdditionalImageFiles(filesArray)
     }
+  }
+
+  const removeExistingImage = (index: number) => {
+    if (confirm('Вы уверены, что хотите удалить это изображение?')) {
+      const newImages = [...existingAdditionalImages]
+      newImages.splice(index, 1)
+      setExistingAdditionalImages(newImages)
+    }
+  }
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null) return
+
+    const newImages = [...existingAdditionalImages]
+    const draggedImage = newImages[draggedIndex]
+    newImages.splice(draggedIndex, 1)
+    newImages.splice(dropIndex, 0, draggedImage)
+    
+    setExistingAdditionalImages(newImages)
+    setDraggedIndex(null)
+  }
+
+  const moveImageUp = (index: number) => {
+    if (index === 0) return
+    const newImages = [...existingAdditionalImages]
+    const temp = newImages[index]
+    newImages[index] = newImages[index - 1]
+    newImages[index - 1] = temp
+    setExistingAdditionalImages(newImages)
+  }
+
+  const moveImageDown = (index: number) => {
+    if (index === existingAdditionalImages.length - 1) return
+    const newImages = [...existingAdditionalImages]
+    const temp = newImages[index]
+    newImages[index] = newImages[index + 1]
+    newImages[index + 1] = temp
+    setExistingAdditionalImages(newImages)
   }
 
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -228,7 +280,14 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
             newAdditionalUrls.push(uploadedUrl)
           }
         }
-        additionalImageUrls = newAdditionalUrls
+        additionalImageUrls = [...existingAdditionalImages, ...newAdditionalUrls]
+      } else {
+        additionalImageUrls = existingAdditionalImages
+      }
+
+      // Ensure we don't exceed 5 additional images
+      if (additionalImageUrls.length > 5) {
+        additionalImageUrls = additionalImageUrls.slice(0, 5)
       }
 
       const { error } = await supabase
@@ -351,7 +410,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-8xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Редактировать товар</DialogTitle>
           </DialogHeader>
@@ -482,6 +541,85 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
               <label className="block text-sm font-medium text-gray-700" htmlFor="edit-additional-images">
                 Дополнительные изображения
               </label>
+              
+              {/* Existing additional images */}
+              {existingAdditionalImages.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Текущие изображения ({existingAdditionalImages.length}):
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {existingAdditionalImages.map((url, index) => (
+                      <div
+                        key={`${url}-${index}`}
+                        className="relative group bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-move"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, index)}
+                      >
+                        <div className="aspect-square relative">
+                          <Image
+                            src={url}
+                            alt={`Additional image ${index + 1}`}
+                            fill
+                            className="object-contain p-2"
+                          />
+                          
+                          {/* Delete button */}
+                          <button
+                            type="button"
+                            onClick={() => removeExistingImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Удалить изображение"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          
+                          {/* Drag handle */}
+                          <div className="absolute top-1 left-1 bg-gray-600 bg-opacity-75 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <GripVertical className="h-3 w-3" />
+                          </div>
+                          
+                          {/* Position indicator */}
+                          <div className="absolute bottom-1 right-1 bg-blue-500 text-white text-xs px-1 py-0.5 rounded">
+                            {index + 1}
+                          </div>
+                        </div>
+                        
+                        {/* Move buttons for mobile */}
+                        <div className="absolute bottom-1 left-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => moveImageUp(index)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-1 py-0.5 rounded"
+                              title="Переместить влево"
+                            >
+                              ←
+                            </button>
+                          )}
+                          {index < existingAdditionalImages.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => moveImageDown(index)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-1 py-0.5 rounded"
+                              title="Переместить вправо"
+                            >
+                              →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    💡 Перетащите изображения для изменения порядка или используйте стрелки на мобильных устройствах
+                  </p>
+                </div>
+              )}
+              
+              {/* Add new additional images */}
               <input
                 type="file"
                 id="edit-additional-images"
@@ -491,18 +629,18 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Эти изображения будут показываться в галерее на странице товара (максимум 5)
+                Добавить новые изображения (максимум 5 общее количество)
               </p>
               {editAdditionalImageFiles.length > 0 && (
                 <div className="text-sm text-gray-600 mt-2">
                   <div className="flex justify-between items-center mb-1">
-                    <span>Выбрано файлов: {editAdditionalImageFiles.length}/5</span>
+                    <span>Новых файлов: {editAdditionalImageFiles.length}</span>
                     <button
                       type="button"
                       onClick={() => setEditAdditionalImageFiles([])}
                       className="text-red-500 hover:text-red-700 text-xs underline"
                     >
-                      Очистить все
+                      Очистить новые
                     </button>
                   </div>
                   <div className="bg-gray-50 rounded p-2 max-h-24 overflow-y-auto">
@@ -514,26 +652,11 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   </div>
                 </div>
               )}
-              {editingProduct?.image_urls && editingProduct.image_urls.length > 0 && editAdditionalImageFiles.length === 0 && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600 mb-1">Текущие дополнительные изображения ({editingProduct.image_urls.length}):</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {editingProduct.image_urls.slice(0, 3).map((url, index) => (
-                      <div key={index} className="relative h-16 w-16 bg-gray-100 rounded">
-                        <Image
-                          src={url}
-                          alt={`Additional image ${index + 1}`}
-                          fill
-                          className="object-contain p-1 rounded"
-                        />
-                      </div>
-                    ))}
-                    {editingProduct.image_urls.length > 3 && (
-                      <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center">
-                        <span className="text-xs text-gray-600">+{editingProduct.image_urls.length - 3}</span>
-                      </div>
-                    )}
-                  </div>
+              
+              {/* Total count warning */}
+              {(existingAdditionalImages.length + editAdditionalImageFiles.length) > 5 && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                  ⚠️ Общее количество изображений превышает 5. Будут сохранены только первые 5.
                 </div>
               )}
             </div>

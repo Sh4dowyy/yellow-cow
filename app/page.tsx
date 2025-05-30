@@ -24,7 +24,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const toysPerPage = 4
+  const toysPerPage = 5
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -165,7 +165,7 @@ export default function Home() {
                   {/* Create pages of 3 toys each */}
                   {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
                     <div key={pageIndex} className="w-full flex-shrink-0">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 px-4 py-8">
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-8 px-4 py-8">
                         {popularToys
                           .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
                           .map((toy) => (
