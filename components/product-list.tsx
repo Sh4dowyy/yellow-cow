@@ -410,13 +410,13 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-8xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto text-lg">
           <DialogHeader>
-            <DialogTitle>Редактировать товар</DialogTitle>
+            <DialogTitle className="text-2xl">Редактировать товар</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4">
+          <form onSubmit={handleEditSubmit} className="space-y-8">
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-name">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-name">
                 Название товара
               </label>
               <Input
@@ -426,11 +426,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 onChange={handleEditFormChange}
                 placeholder="Введите название товара"
                 required
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-description">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-description">
                 Описание
               </label>
               <Textarea
@@ -440,12 +441,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 onChange={handleEditFormChange}
                 placeholder="Введите описание товара"
                 required
-                className="min-h-[100px]"
+                className="min-h-[120px] text-lg"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-category">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-category">
                 Категория
               </label>
               <select
@@ -454,7 +455,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.category_id}
                 onChange={handleEditFormChange}
                 required
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-4 text-lg h-12"
               >
                 <option value="">Выберите категорию</option>
                 {categories.map((category) => (
@@ -465,7 +466,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
               </select>
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex gap-8">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -473,9 +474,9 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   name="is_featured"
                   checked={editFormData.is_featured}
                   onChange={handleEditFormChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="edit-featured" className="ml-2 block text-sm font-medium text-gray-700">
+                <label htmlFor="edit-featured" className="ml-4 block text-lg font-medium text-gray-700">
                   Популярное
                 </label>
               </div>
@@ -486,9 +487,9 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   name="in_stock"
                   checked={editFormData.in_stock}
                   onChange={handleEditFormChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="edit-in-stock" className="ml-2 block text-sm font-medium text-gray-700">
+                <label htmlFor="edit-in-stock" className="ml-4 block text-lg font-medium text-gray-700">
                   В наличии
                 </label>
               </div>
@@ -499,16 +500,16 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                   name="is_new"
                   checked={editFormData.is_new}
                   onChange={handleEditFormChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="edit-is-new" className="ml-2 block text-sm font-medium text-gray-700">
+                <label htmlFor="edit-is-new" className="ml-4 block text-lg font-medium text-gray-700">
                   Новинка
                 </label>
               </div>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-image">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-image">
                 Основное изображение (превью)
               </label>
               <input
@@ -516,15 +517,15 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 id="edit-image"
                 onChange={handleEditFileChange}
                 accept="image/*"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-4 text-lg"
               />
-              <p className="text-xs text-gray-500 mt-1">Это изображение будет отображаться в карточке товара</p>
+              <p className="text-base text-gray-500 mt-3">Это изображение будет отображаться в карточке товара</p>
               {editImageFile && (
-                <p className="text-sm text-gray-600 mt-1">Выбрано: {editImageFile.name}</p>
+                <p className="text-lg text-gray-600 mt-3">Выбрано: {editImageFile.name}</p>
               )}
               {editFormData.image_url && !editImageFile && (
-                <div className="mt-2">
-                  <p className="text-sm text-gray-600 mb-1">Текущее основное изображение:</p>
+                <div className="mt-4">
+                  <p className="text-lg text-gray-600 mb-3">Текущее основное изображение:</p>
                   <div className="relative h-20 w-20 bg-gray-100 rounded">
                     <Image
                       src={editFormData.image_url}
@@ -538,14 +539,14 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-additional-images">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-additional-images">
                 Дополнительные изображения
               </label>
               
               {/* Existing additional images */}
               {existingAdditionalImages.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">
+                <div className="mb-6">
+                  <p className="text-lg text-gray-600 mb-4">
                     Текущие изображения ({existingAdditionalImages.length}):
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -613,7 +614,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-base text-gray-500 mt-3">
                     💡 Перетащите изображения для изменения порядка или используйте стрелки на мобильных устройствах
                   </p>
                 </div>
@@ -626,27 +627,27 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 multiple
                 onChange={handleEditAdditionalFilesChange}
                 accept="image/*"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-4 text-lg"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-base text-gray-500 mt-3">
                 Добавить новые изображения (максимум 5 общее количество)
               </p>
               {editAdditionalImageFiles.length > 0 && (
-                <div className="text-sm text-gray-600 mt-2">
-                  <div className="flex justify-between items-center mb-1">
+                <div className="text-lg text-gray-600 mt-4">
+                  <div className="flex justify-between items-center mb-3">
                     <span>Новых файлов: {editAdditionalImageFiles.length}</span>
                     <button
                       type="button"
                       onClick={() => setEditAdditionalImageFiles([])}
-                      className="text-red-500 hover:text-red-700 text-xs underline"
+                      className="text-red-500 hover:text-red-700 text-base underline"
                     >
                       Очистить новые
                     </button>
                   </div>
-                  <div className="bg-gray-50 rounded p-2 max-h-24 overflow-y-auto">
-                    <ul className="list-disc list-inside space-y-1">
+                  <div className="bg-gray-50 rounded p-4 max-h-28 overflow-y-auto">
+                    <ul className="list-disc list-inside space-y-2">
                       {Array.from(editAdditionalImageFiles).map((file, index) => (
-                        <li key={index} className="text-xs truncate">{file.name}</li>
+                        <li key={index} className="text-base truncate">{file.name}</li>
                       ))}
                     </ul>
                   </div>
@@ -655,14 +656,14 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
               
               {/* Total count warning */}
               {(existingAdditionalImages.length + editAdditionalImageFiles.length) > 5 && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded text-lg text-red-600">
                   ⚠️ Общее количество изображений превышает 5. Будут сохранены только первые 5.
                 </div>
               )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-wb-url">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-wb-url">
                 Wildberries URL
               </label>
               <Input
@@ -671,11 +672,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.wb_url}
                 onChange={handleEditFormChange}
                 placeholder="Введите ссылку на Wildberries"
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-ozon-url">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-ozon-url">
                 Ozon URL
               </label>
               <Input
@@ -684,11 +686,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.ozon_url}
                 onChange={handleEditFormChange}
                 placeholder="Введите ссылку на Ozon"
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-sku">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-sku">
                 Артикул
               </label>
               <Input
@@ -697,11 +700,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.sku}
                 onChange={handleEditFormChange}
                 placeholder="Введите артикул товара"
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-age-range">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-age-range">
                 Возраст
               </label>
               <Input
@@ -710,11 +714,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.age_range}
                 onChange={handleEditFormChange}
                 placeholder="Например: 3-7 лет"
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-manufacturer">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-manufacturer">
                 Производитель
               </label>
               <Input
@@ -723,11 +728,12 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.manufacturer}
                 onChange={handleEditFormChange}
                 placeholder="Введите название производителя"
+                className="text-lg h-12"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700" htmlFor="edit-gender">
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-gender">
                 Пол
               </label>
               <select
@@ -735,7 +741,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 name="gender"
                 value={editFormData.gender}
                 onChange={handleEditFormChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-4 text-lg h-12"
               >
                 <option value="all">Для всех</option>
                 <option value="boys">Мальчики</option>
@@ -743,19 +749,20 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
               </select>
             </div>
             
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-4 pt-8">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
                 disabled={isUpdating}
+                className="text-lg px-8 py-4 h-12"
               >
                 Отмена
               </Button>
               <Button
                 type="submit"
                 disabled={isUpdating}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4 h-12"
               >
                 {isUpdating ? 'Обновление...' : 'Сохранить изменения'}
               </Button>
