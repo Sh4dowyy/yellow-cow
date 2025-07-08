@@ -25,6 +25,7 @@ interface Product {
   sku?: string; // Артикул
   age_range?: string; // Возраст
   manufacturer?: string; // Фирма производителя
+  brand_id?: string; // Бренд
   gender?: string; // Пол
   is_new?: boolean; // Новинка
 }
@@ -35,6 +36,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           sku,
           age_range,
           manufacturer,
+          brand_id,
           gender,
           is_new,
           categories (
@@ -94,6 +97,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             sku,
             age_range,
             manufacturer,
+            brand_id,
             gender,
             is_new,
             categories (
@@ -293,8 +297,20 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </h2>
               <div className="prose prose-gray max-w-none">
                 <p className="font-montserrat text-gray-700 leading-relaxed text-lg">
-                  {product.description}
+                  {isDescriptionExpanded 
+                    ? product.description 
+                    : `${product.description.substring(0, 400)}${product.description.length > 150 ? '...' : ''}`
+                  }
                 </p>
+                {product.description.length > 150 && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="mt-3 text-blue-600 hover:text-blue-800 font-montserrat p-0 h-auto"
+                  >
+                    {isDescriptionExpanded ? 'Свернуть' : 'Развернуть'}
+                  </Button>
+                )}
               </div>
             </Card>
 

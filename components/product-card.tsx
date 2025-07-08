@@ -31,8 +31,8 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
 
   return (
     <Link href={`/product/${product.id}`} className="block group">
-      <div className={`bg-white border border-gray-200 rounded-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg relative mx-auto h-[400px] flex flex-col ${width}`}>
-        <div className="relative h-80 bg-white rounded-lg overflow-hidden">
+      <div className={`bg-white border border-gray-200 rounded-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg relative mx-auto h-[350px] sm:h-[400px] flex flex-col ${width}`}>
+        <div className="relative h-64 sm:h-80 bg-white rounded-lg overflow-hidden">
           <Image 
             src={product.image_url || "/placeholder.svg"} 
             alt={product.name} 
@@ -42,17 +42,18 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
           
           {/* Stock status badge - top right - only show when out of stock */}
           {product.in_stock !== undefined && !product.in_stock && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
               <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
                 <XCircle className="h-3 w-3 mr-1" />
-                Нет в наличии
+                <span className="hidden sm:inline">Нет в наличии</span>
+                <span className="sm:hidden">Нет</span>
               </Badge>
             </div>
           )}
           
           {/* New product badge - top left */}
           {product.is_new && (
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-1 sm:top-2 left-1 sm:left-2">
               <Badge className="bg-green-100 text-green-700 border-green-200 text-xs font-semibold">
                 Новинка
               </Badge>
@@ -60,16 +61,16 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
           )}
         </div>
         
-        <div className="pt-2 pb-2 px-2 flex flex-col justify-between h-28" style={{ backgroundColor: '#E0F2FE' }}>
+        <div className="pt-2 pb-2 px-2 flex flex-col justify-between h-24 sm:h-28" style={{ backgroundColor: '#E0F2FE' }}>
           <div>
-            <h3 className="text-base font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2 text-left line-clamp-2 min-h-[2.5rem]">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-2 text-left line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
               {product.name}
             </h3>
           </div>
           
           <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <p className="text-sm text-left border border-gray-300 px-2 py-1 tracking-wide"
+            <div className="flex gap-1 sm:gap-2">
+              <p className="text-xs sm:text-sm text-left border border-gray-300 px-1 sm:px-2 py-1 tracking-wide"
                 style={{
                   backgroundColor: '#DBE3FA',
                   borderRadius: '10px'
@@ -80,7 +81,7 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
               
               {/* Gender badge */}
               {product.gender && (
-                <p className="text-sm text-left border border-gray-300 px-2 py-1"
+                <p className="text-xs sm:text-sm text-left border border-gray-300 px-1 sm:px-2 py-1"
                   style={{
                     backgroundColor: '#F0FDF4',
                     borderRadius: '10px'
@@ -95,8 +96,8 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
             
             {/* Arrow icon */}
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="bg-blue-500 rounded-lg p-2 shadow-lg">
-                <ArrowRight className="h-4 w-4 text-white" />
+              <div className="bg-blue-500 rounded-lg p-1 sm:p-2 shadow-lg">
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
             </div>
           </div>
