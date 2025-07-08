@@ -24,11 +24,17 @@ interface Product {
   sku?: string
   age_range?: string
   manufacturer?: string
+  brand_id?: string
   gender?: string
   is_new?: boolean
 }
 
 interface Category {
+  id: string
+  name: string
+}
+
+interface Brand {
   id: string
   name: string
 }
@@ -41,6 +47,7 @@ interface ProductListProps {
 export default function ProductList({ products, onProductDeleted }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -56,6 +63,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     sku: '',
     age_range: '',
     manufacturer: '',
+    brand_id: '',
     gender: '',
     is_new: false,
   })
@@ -67,6 +75,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
   useEffect(() => {
     fetchCategories()
+    fetchBrands()
   }, [])
 
   useEffect(() => {
@@ -100,6 +109,18 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       console.error("Error fetching categories:", error)
     } else {
       setCategories(data || [])
+    }
+  }
+
+  const fetchBrands = async () => {
+    const { data, error } = await supabase
+      .from('brands')
+      .select('id, name')
+
+    if (error) {
+      console.error("Error fetching brands:", error)
+    } else {
+      setBrands(data || [])
     }
   }
 
@@ -143,6 +164,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       sku: product.sku || '',
       age_range: product.age_range || '',
       manufacturer: product.manufacturer || '',
+      brand_id: product.brand_id || '',
       gender: product.gender || '',
       is_new: product.is_new || false,
     })
@@ -730,6 +752,26 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 placeholder="Введите название производителя"
                 className="text-lg h-12"
               />
+            </div>
+            
+            <div>
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-brand">
+                Бренд
+              </label>
+              <select
+                id="edit-brand"
+                name="brand_id"
+                value={editFormData.brand_id}
+                onChange={handleEditFormChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-4 text-lg h-12"
+              >
+                <option value="">Выберите бренд</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
+              </select>
             </div>
             
             <div>

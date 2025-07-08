@@ -22,6 +22,7 @@ interface Product {
   sku?: string
   age_range?: string
   manufacturer?: string
+  brand_id?: string
   gender?: string
   is_new?: boolean
 }
@@ -31,9 +32,14 @@ interface Category {
   name: string
 }
 
+interface Brand {
+  id: string
+  name: string
+}
 
 
-const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: () => void, refreshCategories?: () => void }) => {
+
+const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onProductAdded?: () => void, refreshCategories?: () => void, refreshBrands?: () => void }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -44,19 +50,21 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
     ozon_url: '',
     sku: '',
     age_range: '',
-    manufacturer: '',
+    brand_id: '',
     gender: 'all',
     is_new: false,
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
-  }, [refreshCategories]);
+    fetchBrands();
+  }, [refreshCategories, refreshBrands]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -69,6 +77,20 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
       console.error("Error fetching categories:", error);
     } else {
       setCategories(data || []);
+    }
+  };
+
+  const fetchBrands = async () => {
+    const { data, error } = await supabase
+      .from('brands')
+      .select('id, name')
+      .order('name');
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching brands:", error);
+    } else {
+      setBrands(data || []);
     }
   };
 
@@ -188,7 +210,7 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
           ozon_url: '',
           sku: '',
           age_range: '',
-          manufacturer: '',
+          brand_id: '',
           gender: 'all',
           is_new: false,
         });
@@ -384,15 +406,20 @@ const ProductForm = ({ onProductAdded, refreshCategories }: { onProductAdded?: (
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700" htmlFor="manufacturer">Бренд</label>
-        <input
-          type="text"
-          name="manufacturer"
-          value={formData.manufacturer}
+        <label className="block text-sm font-medium text-gray-700" htmlFor="brand_id">Бренд</label>
+        <select
+          name="brand_id"
+          value={formData.brand_id}
           onChange={handleChange}
-          placeholder="Введите название бренда"
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-        />
+        >
+          <option value="">Выберите бренд</option>
+          {brands.map((brand) => (
+            <option key={brand.id} value={brand.id}>
+              {brand.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700" htmlFor="gender">Пол</label>
@@ -659,6 +686,247 @@ const CategoryManagement = ({ onCategoryChanged }: { onCategoryChanged?: () => v
   );
 };
 
+const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) => {
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [brandName, setBrandName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
+  useEffect(() => {
+    fetchBrands();
+  }, []);
+
+  const fetchBrands = async () => {
+    const { data, error } = await supabase
+      .from('brands')
+      .select('id, name')
+      .order('name');
+
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error("Error fetching brands:", error);
+    } else {
+      setBrands(data || []);
+    }
+    setLoading(false);
+  };
+
+  const handleAddBrand = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .insert([{ name: brandName }]);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Error adding brand:", error);
+        alert('Не удалось добавить бренд');
+      } else {
+        setBrandName('');
+        alert('Бренд успешно добавлен!');
+        fetchBrands(); // Refresh the list
+        if (onBrandChanged) {
+          onBrandChanged();
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error:', error);
+      alert('Произошла ошибка');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (id: string, name: string) => {
+    setEditingId(id);
+    setEditingName(name);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleUpdateBrand = async (id: string) => {
+    if (!editingName.trim()) {
+      alert('Название бренда не может быть пустым');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('brands')
+        .update({ name: editingName.trim() })
+        .eq('id', id);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Error updating brand:", error);
+        alert('Не удалось обновить бренд');
+      } else {
+        alert('Бренд успешно обновлен!');
+        setEditingId(null);
+        setEditingName('');
+        fetchBrands(); // Refresh the list
+        if (onBrandChanged) {
+          onBrandChanged();
+        }
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error:', error);
+      alert('Произошла ошибка при обновлении бренда');
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`Вы уверены, что хотите удалить бренд "${name}"? Это действие нельзя отменить.`)) {
+      try {
+        const { error } = await supabase
+          .from('brands')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error("Error deleting brand:", error);
+          alert('Не удалось удалить бренд. Возможно, к нему привязаны товары.');
+        } else {
+          alert('Бренд успешно удален!');
+          fetchBrands(); // Refresh the list
+          if (onBrandChanged) {
+            onBrandChanged();
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error:', error);
+        alert('Произошла ошибка при удалении бренда');
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Add Brand Form */}
+      <div className="bg-gray-50 p-6 rounded-lg border">
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">
+          ➕ Добавить новый бренд
+        </h3>
+        <form onSubmit={handleAddBrand} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700" htmlFor="brandName">
+              Название бренда
+            </label>
+            <input
+              type="text"
+              id="brandName"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="Введите название бренда"
+              required
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+          </div>
+          <button 
+            type="submit" 
+            disabled={isSubmitting || !brandName.trim()}
+            className="w-full bg-green-600 text-white font-montserrat font-bold py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400"
+          >
+            {isSubmitting ? 'Добавление бренда...' : 'Добавить бренд'}
+          </button>
+        </form>
+      </div>
+
+      {/* Brands List */}
+      <div>
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">
+          📋 Существующие бренды
+        </h3>
+        {loading ? (
+          <div className="text-center py-4">Загрузка брендов...</div>
+        ) : (
+          <div className="space-y-4">
+            {brands.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <p className="font-montserrat">Бренды не найдены</p>
+                <p className="text-sm mt-1">Добавьте первый бренд выше</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {brands.map((brand) => (
+                  <div key={brand.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                    <div className="flex-1 mr-4">
+                      {editingId === brand.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="w-full border border-gray-300 rounded-md shadow-sm p-2 font-montserrat font-semibold text-gray-800"
+                          autoFocus
+                        />
+                      ) : (
+                        <h4 className="font-montserrat font-semibold text-gray-800">{brand.name}</h4>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {editingId === brand.id ? (
+                        <>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleUpdateBrand(brand.id)}
+                            className="font-montserrat"
+                          >
+                            Сохранить
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            className="font-montserrat"
+                          >
+                            Отмена
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(brand.id, brand.name)}
+                            className="font-montserrat"
+                          >
+                            Изменить
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(brand.id, brand.name)}
+                            className="font-montserrat"
+                          >
+                            Удалить
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -686,7 +954,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, gender, is_new')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, brand_id, gender, is_new')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -706,7 +974,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, gender, is_new')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, brand_id, gender, is_new')
 
     if (productsError) {
       // eslint-disable-next-line no-console
@@ -745,10 +1013,11 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="add" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
           <TabsTrigger value="add">Добавить товар</TabsTrigger>
           <TabsTrigger value="manage">Управление товарами</TabsTrigger>
           <TabsTrigger value="categories">Управление категориями</TabsTrigger>
+          <TabsTrigger value="brands">Управление брендами</TabsTrigger>
         </TabsList>
 
         <TabsContent value="add">
@@ -761,6 +1030,7 @@ export default function AdminPage() {
               <ProductForm 
                 onProductAdded={handleProductDeleted} 
                 refreshCategories={() => setRefreshKey(prev => prev + 1)}
+                refreshBrands={() => setRefreshKey(prev => prev + 1)}
               />
             </CardContent>
           </Card>
@@ -786,6 +1056,20 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <CategoryManagement onCategoryChanged={() => {
+                setRefreshKey(prev => prev + 1);
+              }} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="brands">
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление брендами</CardTitle>
+              <CardDescription>Добавление новых брендов и управление существующими</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BrandManagement onBrandChanged={() => {
                 setRefreshKey(prev => prev + 1);
               }} />
             </CardContent>

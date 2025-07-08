@@ -2,7 +2,6 @@
 
 import ProductCard from "@/components/product-card"
 import ContactButton from "@/components/contact-button"
-import YandexMap from "@/components/yandex-map"
 import { useState, useEffect } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -17,38 +16,89 @@ interface Product {
   in_stock: boolean
   is_new?: boolean
   manufacturer: string
+  brand_id?: string
+}
+
+interface Brand {
+  id: string
+  name: string
+}
+
+interface BrandWithCount {
+  id: string
+  name: string
+  productCount: number
 }
 
 export default function Home() {
   const [popularToys, setPopularToys] = useState<Product[]>([])
+  const [brands, setBrands] = useState<BrandWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const toysPerPage = 5
 
   useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, manufacturer')
-        .eq('is_featured', true)
+    const fetchData = async () => {
+      try {
+        // Fetch featured products
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, manufacturer, brand_id')
+          .eq('is_featured', true)
 
-      if (error) {
-        console.error("Error fetching featured products:", error)
-        setError("Failed to load popular toys.")
-      } else {
-        // Сортируем так, чтобы новинки были первыми
-        const sortedData = (data as Product[]).sort((a, b) => {
-          if (a.is_new && !b.is_new) return -1
-          if (!a.is_new && b.is_new) return 1
-          return 0
-        })
-        setPopularToys(sortedData)
+        if (productsError) {
+          console.error("Error fetching featured products:", productsError)
+          setError("Failed to load popular toys.")
+        } else {
+          // Сортируем так, чтобы новинки были первыми
+          const sortedData = (productsData as Product[]).sort((a, b) => {
+            if (a.is_new && !b.is_new) return -1
+            if (!a.is_new && b.is_new) return 1
+            return 0
+          })
+          setPopularToys(sortedData)
+        }
+
+        // Fetch brands with product counts
+        const { data: brandsData, error: brandsError } = await supabase
+          .from('brands')
+          .select('id, name')
+
+        if (brandsError) {
+          console.error("Error fetching brands:", brandsError)
+        } else {
+          // Get product counts for each brand
+          const brandsWithCounts = await Promise.all(
+            (brandsData as Brand[]).map(async (brand) => {
+              const { count } = await supabase
+                .from('products')
+                .select('*', { count: 'exact', head: true })
+                .eq('brand_id', brand.id)
+              
+              return {
+                ...brand,
+                productCount: count || 0
+              }
+            })
+          )
+          
+          // Sort brands by product count and filter out those with 0 products
+          const filteredBrands = brandsWithCounts
+            .filter(brand => brand.productCount > 0)
+            .sort((a, b) => b.productCount - a.productCount)
+          
+          setBrands(filteredBrands)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        setError("Failed to load data.")
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    fetchFeaturedProducts()
+    fetchData()
   }, [])
 
   if (loading) {
@@ -106,7 +156,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto text-center">
             {/* ARIA TOYS Logo Style */}
             <div className="mb-8">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl text-white mb-2 tracking-widest">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-2 tracking-widest">
                 <span className="inline-block bg-gradient-to-r from-sky-300 to-sky-400 bg-clip-text text-transparent">
                   ARIA
                 </span>
@@ -116,10 +166,10 @@ export default function Home() {
             </div>
             
             
-            <p className="text-xl md:text-2xl font-montserrat font-bold text-white mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl font-montserrat font-bold text-white mb-8 leading-relaxed">
               Волшебный мир детских игрушек!
             </p>
-            <p className="text-lg font-montserrat font-medium text-blue-100 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg font-montserrat font-medium text-blue-100 mb-10 leading-relaxed max-w-2xl mx-auto">
               Подарите вашему ребенку радость и развитие с качественными игрушками. 
               От развивающих конструкторов до мягких плюшевых друзей!
             </p>
@@ -144,12 +194,12 @@ export default function Home() {
 
       {/* Popular Toys Section */}
       <section id="popular-toys" className="py-24 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-2 sm:px-4">
                       <div className="text-center mb-12">
-              <h2 className="text-4xl text-blue-700 mb-4 tracking-wider">
+              <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4 tracking-wider">
                 Популярные игрушки
               </h2>
-              <p className="text-lg text-blue-600 font-montserrat font-medium">Самые любимые игрушки наших маленьких покупателей!</p>
+              <p className="text-base sm:text-lg text-blue-600 font-montserrat font-medium">Самые любимые игрушки наших маленьких покупателей!</p>
             </div>
           
           {popularToys.length > 0 ? (
@@ -165,11 +215,11 @@ export default function Home() {
                   {/* Create pages of 3 toys each */}
                   {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
                     <div key={pageIndex} className="w-full flex-shrink-0">
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-8 px-4 py-8">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-6 md:gap-8 px-2 sm:px-4 py-8">
                         {popularToys
                           .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
                           .map((toy) => (
-                            <ProductCard key={toy.id} product={toy} width="max-w-[240px]" />
+                            <ProductCard key={toy.id} product={toy} width="max-w-[180px] sm:max-w-[240px]" />
                           ))}
                       </div>
                     </div>
@@ -231,6 +281,43 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Brands Section */}
+      <section className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4 tracking-wider">
+              Популярные бренды
+            </h2>
+            <p className="text-base sm:text-lg text-blue-600 font-montserrat font-medium">
+              Известные производители игрушек в нашем каталоге
+            </p>
+          </div>
+          
+          {brands.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 max-w-6xl mx-auto">
+              {brands.map((brand) => (
+                <div key={brand.id} className="group">
+                  <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border border-gray-200">
+                    <div className="text-center">
+                      <h3 className="text-sm sm:text-base font-montserrat font-semibold text-gray-800 mb-2 line-clamp-2">
+                        {brand.name}
+                      </h3>
+                      <div className="text-xs sm:text-sm text-blue-600 font-medium">
+                        {brand.productCount} товар{brand.productCount === 1 ? '' : brand.productCount < 5 ? 'а' : 'ов'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600 font-montserrat">Бренды скоро появятся!</p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* About Us Section */}
       <section className="py-16 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden">
         {/* Background decoration */}
@@ -243,78 +330,70 @@ export default function Home() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl text-white mb-6 tracking-wider">
-                О магазине ARIA TOYS
+                ARIA TOYS - Где купить
               </h2>
               <p className="text-blue-100 font-montserrat leading-relaxed text-lg max-w-3xl mx-auto">
                 Мы специализируемся на качественных детских игрушках, которые развивают воображение и творческие способности. 
-                Каждая игрушка тщательно отобрана с заботой о безопасности и развитии вашего ребенка.
+                Найдите наши игрушки в популярных интернет-магазинах!
               </p>
             </div>
             
-            <div className="grid lg:grid-cols-2 gap-8 items-start">
-              {/* Contact Info */}
+            <div className="max-w-4xl mx-auto">
+              {/* Our Stores */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-                <h3 className="text-xl text-white mb-6 text-center tracking-wide">
-                  📞 Контактная информация
+                <h3 className="text-2xl text-white mb-8 text-center tracking-wide">
+                  🛍️ Наши магазины
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="text-sky-300 text-lg mt-1">📍</div>
-                    <div>
-                      <div className="font-montserrat font-semibold text-white text-sm">Адрес</div>
-                      <div className="font-montserrat text-blue-100 text-sm">
-                        Ленинградская обл., Янино-1,<br />
-                        Шоссейная улица, 48Ес2
-                      </div>
+                
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* Wildberries */}
+                  <div className="text-center">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/30 transition-all duration-300">
+                      <h4 className="text-xl font-montserrat font-semibold text-white mb-3">
+                        Wildberries
+                      </h4>
+                      <a
+                        href="https://www.wildberries.ru/seller/1534088"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-montserrat font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      >
+                        Перейти в магазин
+                      </a>
                     </div>
                   </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="text-sky-300 text-lg mt-1">📱</div>
-                    <div>
-                      <div className="font-montserrat font-semibold text-white text-sm">Телефон</div>
-                      <div className="font-montserrat text-blue-100 text-sm">
-                        <a href="tel:+79112929496" className="hover:text-white transition-colors">
-                          +7 911 292-94-96
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="text-sky-300 text-lg mt-1">📧</div>
-                    <div>
-                      <div className="font-montserrat font-semibold text-white text-sm">E-mail</div>
-                      <div className="font-montserrat text-blue-100 text-sm">
-                        <a href="mailto:ariatoys@mail.ru" className="hover:text-white transition-colors">
-                          ariatoys@mail.ru
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="text-sky-300 text-lg mt-1">🕒</div>
-                    <div>
-                      <div className="font-montserrat font-semibold text-white text-sm">Режим работы</div>
-                      <div className="font-montserrat text-blue-100 text-sm">
-                        Пн – Пт: с 09:00 до 18:00
-                      </div>
+
+                  {/* Ozon */}
+                  <div className="text-center">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/30 transition-all duration-300">
+                      <h4 className="text-xl font-montserrat font-semibold text-white mb-3">
+                        Ozon
+                      </h4>
+                      <a
+                        href="https://www.ozon.ru/seller/aria-toys-1455526"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-montserrat font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      >
+                        Перейти в магазин
+                      </a>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Yandex Map */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <h3 className="text-xl text-white mb-4 text-center tracking-wide">
-                  🗺️ Как нас найти
-                </h3>
-                <div className="rounded-lg overflow-hidden h-64 bg-gray-200">
-                  <YandexMap 
-                    address="Shosseynaya ulitsa, 48Ес2, gorodskoy posyolok Yanino-1, Zanevskoye gorodskoye poseleniye, Vsevolozhckiy District, Leningrad Region"
-                    className="rounded-lg"
-                  />
+                {/* Contact Email */}
+                <div className="mt-8 text-center">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h4 className="text-lg font-montserrat font-semibold text-white mb-2">
+                      Связаться с нами
+                    </h4>
+                    <p className="text-blue-100 font-montserrat text-sm">
+                      По всем вопросам пишите на: 
+                      <a href="mailto:ariatoys@mail.ru" className="text-sky-300 hover:text-white transition-colors ml-2">
+                        ariatoys@mail.ru
+                      </a>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

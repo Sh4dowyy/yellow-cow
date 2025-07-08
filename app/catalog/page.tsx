@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/product-card"
 import ContactButton from "@/components/contact-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
 
 interface Toy {
@@ -18,6 +19,7 @@ interface Toy {
   sku?: string;
   age_range?: string;
   manufacturer?: string;
+  brand_id?: string;
   is_new?: boolean;
 }
 
@@ -26,13 +28,20 @@ interface Category {
   name: string;
 }
 
+interface Brand {
+  id: string;
+  name: string;
+}
+
 function CatalogContent() {
   const [toys, setToys] = useState<Toy[]>([]);
   const [filteredToys, setFilteredToys] = useState<Toy[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedBrand, setSelectedBrand] = useState<string>("all");
   
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
@@ -42,7 +51,7 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer, is_new');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer, brand_id, is_new');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
@@ -68,6 +77,17 @@ function CatalogContent() {
         setCategories(categoriesData);
       }
 
+      const { data: brandsData, error: brandsError } = await supabase
+        .from('brands')
+        .select('id, name');
+
+      if (brandsError) {
+        console.error("Error fetching brands:", brandsError);
+        setError("Failed to load brands.");
+      } else {
+        setBrands(brandsData);
+      }
+
       setLoading(false);
     };
 
@@ -81,13 +101,15 @@ function CatalogContent() {
 
     // Фильтрация по поисковому запросу
     if (searchQuery) {
-      filtered = filtered.filter(toy => 
-        toy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      filtered = filtered.filter(toy => {
+        const brandName = brands.find(brand => brand.id === toy.brand_id)?.name || '';
+        return toy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         toy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (toy.sku && toy.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (toy.manufacturer && toy.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (toy.age_range && toy.age_range.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+        (toy.age_range && toy.age_range.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        brandName.toLowerCase().includes(searchQuery.toLowerCase());
+      });
     }
 
     // Фильтрация по категории (если указана в URL)
@@ -98,17 +120,33 @@ function CatalogContent() {
       setActiveTab("all");
     }
 
+    // Фильтрация по бренду
+    if (selectedBrand !== "all") {
+      filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
+    }
+
     setFilteredToys(filtered);
-  }, [toys, searchQuery, categoryFilter]);
+  }, [toys, searchQuery, categoryFilter, selectedBrand, brands]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (value === "all") {
-      setFilteredToys(toys);
-    } else {
-      const filtered = toys.filter(toy => toy.category_id === value);
-      setFilteredToys(filtered);
+    let filtered = toys;
+    
+    // Фильтрация по категории
+    if (value !== "all") {
+      filtered = filtered.filter(toy => toy.category_id === value);
     }
+    
+    // Фильтрация по бренду
+    if (selectedBrand !== "all") {
+      filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
+    }
+    
+    setFilteredToys(filtered);
+  };
+
+  const handleBrandChange = (brandId: string) => {
+    setSelectedBrand(brandId);
   };
 
   if (loading) {
@@ -136,14 +174,14 @@ function CatalogContent() {
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-montserrat font-black text-white mb-4 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-montserrat font-black text-white mb-4 tracking-tight">
               {searchQuery ? (
                 <>Найдено: "{searchQuery}"</>
               ) : (
                 <>Каталог ARIA TOYS</>
               )}
             </h1>
-            <p className="text-xl text-blue-100 font-montserrat font-medium mb-6">
+            <p className="text-lg sm:text-xl text-blue-100 font-montserrat font-medium mb-6">
               {searchQuery ? 'Результаты вашего поиска' : 'Выберите идеальную игрушку для вашего малыша!'}
             </p>
 
@@ -158,44 +196,64 @@ function CatalogContent() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-2 sm:px-4 py-12">
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-12">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-montserrat font-black text-blue-700 mb-6">Выберите категорию</h2>
+          <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-6">Выберите категорию</h2>
         </div>
-        <div className="flex justify-center mb-8">
-          <TabsList className="inline-flex flex-wrap gap-1 bg-white/50 backdrop-blur-sm rounded-2xl p-1 shadow-lg">
-          <TabsTrigger
-            value="all"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 py-2 font-bold transition-all duration-300 transform hover:scale-105"
-          >
-            Все игрушки
-          </TabsTrigger>
-          {categories.map((category) => (
+        <div className="flex justify-center mb-28 px-2">
+          <TabsList className="inline-flex flex-wrap gap-2 sm:gap-1 justify-center bg-transparent border-0 p-0">
             <TabsTrigger
-              key={category.id}
-              value={category.id}
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 py-2 font-bold transition-all duration-300 transform hover:scale-105"
+              value="all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap"
             >
-              {category.name}
+              Все игрушки
             </TabsTrigger>
-          ))}
+            {categories.map((category) => (
+              <TabsTrigger
+                key={category.id}
+                value={category.id}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap"
+              >
+                {category.name}
+              </TabsTrigger>
+            ))}
           </TabsList>
+        </div>
+
+        {/* Brand Filter */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <h3 className="text-lg font-montserrat font-semibold text-blue-700">Фильтр по бренду:</h3>
+            <Select value={selectedBrand} onValueChange={handleBrandChange}>
+              <SelectTrigger className="w-[200px] sm:w-[250px]">
+                <SelectValue placeholder="Все бренды" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все бренды</SelectItem>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Content for "Все игрушки" */}
         <TabsContent value="all" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {(searchQuery || categoryFilter ? filteredToys : toys).map((toy) => (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+            {(searchQuery || categoryFilter || selectedBrand !== "all" ? filteredToys : toys).map((toy) => (
               <ProductCard 
                 key={toy.id} 
                 product={toy} 
-                width="max-w-[240px]"
+                width="max-w-[180px] sm:max-w-[240px]"
               />
             ))}
           </div>
-          {(searchQuery || categoryFilter ? filteredToys : toys).length === 0 && (
+          {(searchQuery || categoryFilter || selectedBrand !== "all" ? filteredToys : toys).length === 0 && (
             <div className="text-center py-16">
               <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">
                 {searchQuery ? "Ничего не найдено" : "Товары скоро появятся"}
@@ -210,12 +268,12 @@ function CatalogContent() {
         {/* Content for each category */}
         {categories.map((category) => (
           <TabsContent key={category.id} value={category.id} className="mt-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
               {filteredToys.map((toy) => (
                               <ProductCard 
                 key={toy.id} 
                 product={toy} 
-                width="max-w-[240px]"
+                width="max-w-[180px] sm:max-w-[240px]"
               />
               ))}
             </div>
