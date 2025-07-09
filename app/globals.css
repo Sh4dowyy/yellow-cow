@@ -114,11 +114,7 @@
   display: none;
 }
 
-/* Улучшение touch взаимодействия */
-.touch-pan-y {
-  touch-action: pan-y;
-}
-
-.touch-pan-x {
-  touch-action: pan-x;
+/* Улучшение touch взаимодействия для карусели */
+.carousel-container {
+  touch-action: manipulation;
 }

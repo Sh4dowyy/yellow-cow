@@ -36,37 +36,50 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
-  const [touchStart, setTouchStart] = useState(0)
-  const [touchEnd, setTouchEnd] = useState(0)
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
+  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null)
   const toysPerPage = 5
   const mobileToysPerPage = 4
 
   // Функции для обработки touch событий
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(0) // otherwise the swipe is fired even with usual touch events
-    setTouchStart(e.targetTouches[0].clientX)
+    setTouchEnd(null)
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    })
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    })
   }
 
   const handleTouchEnd = (isMobile: boolean) => {
     if (!touchStart || !touchEnd) return
     
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > 50
-    const isRightSwipe = distance < -50
+    const distanceX = touchStart.x - touchEnd.x
+    const distanceY = touchStart.y - touchEnd.y
+    const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY)
     
-    const currentToysPerPage = isMobile ? mobileToysPerPage : toysPerPage
-    const totalPages = Math.ceil(popularToys.length / currentToysPerPage)
-    
-    if (isLeftSwipe && currentPage < totalPages - 1) {
-      setCurrentPage(currentPage + 1)
+    // Только обрабатываем горизонтальные свайпы
+    if (isHorizontalSwipe) {
+      const isLeftSwipe = distanceX > 50
+      const isRightSwipe = distanceX < -50
+      
+      const currentToysPerPage = isMobile ? mobileToysPerPage : toysPerPage
+      const totalPages = Math.ceil(popularToys.length / currentToysPerPage)
+      
+      if (isLeftSwipe && currentPage < totalPages - 1) {
+        setCurrentPage(currentPage + 1)
+      }
+      if (isRightSwipe && currentPage > 0) {
+        setCurrentPage(currentPage - 1)
+      }
     }
-    if (isRightSwipe && currentPage > 0) {
-      setCurrentPage(currentPage - 1)
-    }
+    // Если это вертикальный свайп, ничего не делаем - позволяем браузеру обрабатывать скролл
   }
 
   useEffect(() => {
@@ -266,9 +279,9 @@ export default function Home() {
             <>
               {/* Мобильная версия с touch-свайпом */}
               <div className="block sm:hidden">
-                <div className="overflow-hidden">
+                <div className="overflow-hidden carousel-container">
                   <div 
-                    className="flex transition-transform duration-300 ease-in-out touch-pan-x"
+                    className="flex transition-transform duration-300 ease-in-out"
                     style={{
                       transform: `translateX(-${currentPage * 100}%)`
                     }}
@@ -310,9 +323,9 @@ export default function Home() {
 
               {/* Десктопная версия */}
               <div className="hidden sm:block">
-                <div className="overflow-hidden">
-                                     <div 
-                     className="flex transition-transform duration-300 ease-in-out touch-pan-x"
+                                 <div className="overflow-hidden carousel-container">
+                   <div 
+                     className="flex transition-transform duration-300 ease-in-out"
                      style={{
                        transform: `translateX(-${currentPage * 100}%)`
                      }}
