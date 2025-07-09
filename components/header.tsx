@@ -188,7 +188,11 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
 
           {/* Логотип */}
           <Link href="/" className="flex items-center flex-shrink-0">
-            <span className="text-2xl font-montserrat font-bold text-sky-500 tracking-tight">ARIA TOYS</span>
+            <img 
+              src="/logos/aria-toys-logo.png" 
+              alt="ARIA TOYS"
+              className="h-12 w-20"
+            />
           </Link>
 
           {/* Spacer */}

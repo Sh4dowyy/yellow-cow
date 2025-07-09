@@ -24,7 +24,6 @@ interface Product {
   category_name?: string;
   sku?: string; // Артикул
   age_range?: string; // Возраст
-  manufacturer?: string; // Фирма производителя
   brand_id?: string; // Бренд
   gender?: string; // Пол
   is_new?: boolean; // Новинка
@@ -37,6 +36,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [brands, setBrands] = useState<{ id: string; name: string; image_url?: string }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -59,7 +59,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           ozon_url,
           sku,
           age_range,
-          manufacturer,
           brand_id,
           gender,
           is_new,
@@ -96,7 +95,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             ozon_url,
             sku,
             age_range,
-            manufacturer,
             brand_id,
             gender,
             is_new,
@@ -114,6 +112,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             category_name: (item.categories as any)?.name || "Неизвестная категория"
           }));
           setRecommendedProducts(processedRecommended);
+        }
+
+        // Fetch brands for brand names
+        const { data: brandsData } = await supabase
+          .from('brands')
+          .select('id, name, image_url');
+        
+        if (brandsData) {
+          setBrands(brandsData);
         }
       }
       setLoading(false);
@@ -244,11 +251,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   Возраст: {product.age_range}
                 </Badge>
               )}
-              {product.manufacturer && (
-                <Badge variant="outline" className="border-purple-200 text-purple-700 text-base px-4 py-2">
-                  {product.manufacturer}
-                </Badge>
-              )}
+
               {product.gender && (
                 <Badge variant="outline" className="border-pink-200 text-pink-700 text-base px-4 py-2">
                   {product.gender === 'boys' ? 'Для мальчиков' : 
@@ -367,6 +370,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   key={recommendedProduct.id} 
                   product={recommendedProduct}
                   width="max-w-[260px]"
+                  brandName={brands.find(brand => brand.id === recommendedProduct.brand_id)?.name}
                 />
               ))}
             </div>

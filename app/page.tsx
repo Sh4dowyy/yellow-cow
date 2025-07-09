@@ -4,7 +4,6 @@ import ProductCard from "@/components/product-card"
 import ContactButton from "@/components/contact-button"
 import { useState, useEffect } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Product {
   id: string
@@ -15,18 +14,19 @@ interface Product {
   category_id: string
   in_stock: boolean
   is_new?: boolean
-  manufacturer: string
   brand_id?: string
 }
 
 interface Brand {
   id: string
   name: string
+  image_url?: string
 }
 
 interface BrandWithCount {
   id: string
   name: string
+  image_url?: string
   productCount: number
 }
 
@@ -36,7 +36,38 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
+  const [touchStart, setTouchStart] = useState(0)
+  const [touchEnd, setTouchEnd] = useState(0)
   const toysPerPage = 5
+  const mobileToysPerPage = 4
+
+  // Функции для обработки touch событий
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0) // otherwise the swipe is fired even with usual touch events
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = (isMobile: boolean) => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+    
+    const currentToysPerPage = isMobile ? mobileToysPerPage : toysPerPage
+    const totalPages = Math.ceil(popularToys.length / currentToysPerPage)
+    
+    if (isLeftSwipe && currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1)
+    }
+    if (isRightSwipe && currentPage > 0) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +75,7 @@ export default function Home() {
         // Fetch featured products
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, manufacturer, brand_id')
+          .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, brand_id')
           .eq('is_featured', true)
 
         if (productsError) {
@@ -61,13 +92,28 @@ export default function Home() {
         }
 
         // Fetch brands with product counts
-        const { data: brandsData, error: brandsError } = await supabase
+        // First try with image_url, if it fails, try without it
+        let { data: brandsData, error: brandsError } = await supabase
           .from('brands')
-          .select('id, name')
+          .select('id, name, image_url')
+
+        // If error occurs (possibly because image_url column doesn't exist), try without image_url
+        if (brandsError) {
+          console.warn("Error fetching brands with image_url, trying without it:", brandsError)
+          const fallbackQuery = await supabase
+            .from('brands')
+            .select('id, name')
+          
+          // Add image_url field to maintain type compatibility
+          brandsData = fallbackQuery.data?.map(brand => ({ ...brand, image_url: null })) || null
+          brandsError = fallbackQuery.error
+        }
 
         if (brandsError) {
           console.error("Error fetching brands:", brandsError)
         } else {
+          console.log("Fetched brands data:", brandsData)
+          
           // Get product counts for each brand
           const brandsWithCounts = await Promise.all(
             (brandsData as Brand[]).map(async (brand) => {
@@ -83,12 +129,14 @@ export default function Home() {
             })
           )
           
-          // Sort brands by product count and filter out those with 0 products
-          const filteredBrands = brandsWithCounts
-            .filter(brand => brand.productCount > 0)
+          console.log("Brands with counts:", brandsWithCounts)
+          
+          // Show all brands, regardless of product count (for debugging)
+          // Later we can add back the filter: .filter(brand => brand.productCount > 0)
+          const sortedBrands = brandsWithCounts
             .sort((a, b) => b.productCount - a.productCount)
           
-          setBrands(filteredBrands)
+          setBrands(sortedBrands)
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -99,6 +147,16 @@ export default function Home() {
     }
 
     fetchData()
+  }, [])
+
+  // Сброс текущей страницы при изменении размера экрана
+  useEffect(() => {
+    const handleResize = () => {
+      setCurrentPage(0)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   if (loading) {
@@ -147,21 +205,20 @@ export default function Home() {
 
           {/* White Cloud shapes */}
           <div className="absolute top-1/4 left-1/3 w-24 h-12 bg-white rounded-full opacity-20"></div>
-          <div className="absolute top-1/4 left-1/3 ml-8 mt-4 w-16 h-12 bg-white rounded-full opacity-15"></div>
+          <div className="absolute top-1/4 left-1/3 translate-x-8 translate-y-4 w-16 h-12 bg-white rounded-full opacity-15"></div>
           <div className="absolute bottom-1/3 right-1/4 w-28 h-14 bg-white rounded-full opacity-20"></div>
-          <div className="absolute bottom-1/3 right-1/4 ml-10 mt-5 w-18 h-12 bg-white rounded-full opacity-15"></div>
+          <div className="absolute bottom-1/3 right-1/4 -translate-x-10 translate-y-5 w-16 h-12 bg-white rounded-full opacity-15"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            {/* ARIA TOYS Logo Style */}
+            {/* ARIA TOYS Logo */}
             <div className="mb-8">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white mb-2 tracking-widest">
-                <span className="inline-block bg-gradient-to-r from-sky-300 to-sky-400 bg-clip-text text-transparent">
-                  ARIA
-                </span>
-                <span className="text-white ml-2">TOYS</span>
-              </h1>
+              <img 
+                src="/logos/aria-toys-logo.png" 
+                alt="ARIA TOYS"
+                className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto mx-auto mb-4"
+              />
               <div className="w-20 h-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full mx-auto"></div>
             </div>
             
@@ -175,12 +232,15 @@ export default function Home() {
             </p>
             
             {/* Call to Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white tracking-wide py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 max-w-4xl mx-auto">
+              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Открыть каталог
               </a>
-              <button onClick={() => document.getElementById('popular-toys')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <button onClick={() => document.getElementById('popular-toys')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Популярные игрушки
+              </button>
+              <button onClick={() => document.getElementById('brands')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
+                Бренды
               </button>
             </div>
             
@@ -203,76 +263,95 @@ export default function Home() {
             </div>
           
           {popularToys.length > 0 ? (
-            <div className="relative">
-              {/* Carousel Container */}
-              <div className="overflow-hidden">
-                <div 
-                  className="flex transition-transform duration-300 ease-in-out"
-                  style={{
-                    transform: `translateX(-${currentPage * 100}%)`
-                  }}
-                >
-                  {/* Create pages of 3 toys each */}
-                  {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
-                    <div key={pageIndex} className="w-full flex-shrink-0">
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3 sm:gap-6 md:gap-8 px-2 sm:px-4 py-8">
-                        {popularToys
-                          .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
-                          .map((toy) => (
-                            <ProductCard key={toy.id} product={toy} width="max-w-[180px] sm:max-w-[240px]" />
-                          ))}
+            <>
+              {/* Мобильная версия с touch-свайпом */}
+              <div className="block sm:hidden">
+                <div className="overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-300 ease-in-out touch-pan-x"
+                    style={{
+                      transform: `translateX(-${currentPage * 100}%)`
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={() => handleTouchEnd(true)}
+                  >
+                    {Array.from({ length: Math.ceil(popularToys.length / mobileToysPerPage) }).map((_, pageIndex) => (
+                      <div key={pageIndex} className="w-full flex-shrink-0">
+                        <div className="grid grid-cols-2 gap-3 px-2 py-8">
+                          {popularToys
+                            .slice(pageIndex * mobileToysPerPage, (pageIndex + 1) * mobileToysPerPage)
+                            .map((toy) => (
+                              <ProductCard key={toy.id} product={toy} width="max-w-[180px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
+                            ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+
+                {/* Page Indicators для мобильной версии */}
+                {Math.ceil(popularToys.length / mobileToysPerPage) > 1 && (
+                  <div className="flex justify-center mt-8 gap-2">
+                    {Array.from({ length: Math.ceil(popularToys.length / mobileToysPerPage) }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentPage(index)}
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          index === currentPage 
+                            ? 'bg-sky-500' 
+                            : 'bg-gray-300 hover:bg-gray-400'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Navigation Buttons */}
-              {Math.ceil(popularToys.length / toysPerPage) > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                    disabled={currentPage === 0}
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center transition-all ${
-                      currentPage === 0 
-                        ? 'opacity-50 cursor-not-allowed' 
-                        : 'hover:bg-sky-50 hover:border-sky-200'
-                    }`}
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  <button
-                    onClick={() => setCurrentPage(Math.min(Math.ceil(popularToys.length / toysPerPage) - 1, currentPage + 1))}
-                    disabled={currentPage === Math.ceil(popularToys.length / toysPerPage) - 1}
-                    className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center transition-all ${
-                      currentPage === Math.ceil(popularToys.length / toysPerPage) - 1 
-                        ? 'opacity-50 cursor-not-allowed' 
-                        : 'hover:bg-sky-50 hover:border-sky-200'
-                    }`}
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
-                </>
-              )}
-
-              {/* Page Indicators */}
-              {Math.ceil(popularToys.length / toysPerPage) > 1 && (
-                <div className="flex justify-center mt-8 gap-2">
-                  {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentPage(index)}
-                      className={`w-3 h-3 rounded-full transition-all ${
-                        index === currentPage 
-                          ? 'bg-sky-500' 
-                          : 'bg-gray-300 hover:bg-gray-400'
-                      }`}
-                    />
-                  ))}
+              {/* Десктопная версия */}
+              <div className="hidden sm:block">
+                <div className="overflow-hidden">
+                                     <div 
+                     className="flex transition-transform duration-300 ease-in-out touch-pan-x"
+                     style={{
+                       transform: `translateX(-${currentPage * 100}%)`
+                     }}
+                     onTouchStart={handleTouchStart}
+                     onTouchMove={handleTouchMove}
+                     onTouchEnd={() => handleTouchEnd(false)}
+                   >
+                    {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
+                      <div key={pageIndex} className="w-full flex-shrink-0">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8 px-4 py-8">
+                          {popularToys
+                            .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
+                            .map((toy) => (
+                              <ProductCard key={toy.id} product={toy} width="max-w-[240px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
+                            ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </div>
+
+                {/* Page Indicators для десктопной версии */}
+                {Math.ceil(popularToys.length / toysPerPage) > 1 && (
+                  <div className="flex justify-center mt-8 gap-2">
+                    {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentPage(index)}
+                        className={`w-3 h-3 rounded-full transition-all ${
+                          index === currentPage 
+                            ? 'bg-sky-500' 
+                            : 'bg-gray-300 hover:bg-gray-400'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-600 font-montserrat">Популярные игрушки скоро появятся!</p>
@@ -282,11 +361,11 @@ export default function Home() {
       </section>
 
       {/* Brands Section */}
-      <section className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
+      <section id="brands" className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4 tracking-wider">
-              Популярные бренды
+              Бренды
             </h2>
             <p className="text-base sm:text-lg text-blue-600 font-montserrat font-medium">
               Известные производители игрушек в нашем каталоге
@@ -294,22 +373,63 @@ export default function Home() {
           </div>
           
           {brands.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 max-w-6xl mx-auto">
-              {brands.map((brand) => (
-                <div key={brand.id} className="group">
-                  <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border border-gray-200">
-                    <div className="text-center">
-                      <h3 className="text-sm sm:text-base font-montserrat font-semibold text-gray-800 mb-2 line-clamp-2">
-                        {brand.name}
-                      </h3>
-                      <div className="text-xs sm:text-sm text-blue-600 font-medium">
-                        {brand.productCount} товар{brand.productCount === 1 ? '' : brand.productCount < 5 ? 'а' : 'ов'}
+            <>
+              {/* Мобильная версия с горизонтальным скроллом */}
+              <div className="block sm:hidden overflow-hidden">
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide">
+                  {brands.map((brand) => (
+                    <a 
+                      key={brand.id} 
+                      href={`/catalog?brand=${brand.id}`}
+                      className="group block flex-shrink-0"
+                    >
+                      <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border border-gray-200 overflow-hidden aspect-square w-20 h-20">
+                        {brand.image_url ? (
+                          <img 
+                            src={brand.image_url} 
+                            alt={brand.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center">
+                                                      <span className="text-blue-600 font-bold text-xl">
+                            {brand.name.charAt(0)}
+                          </span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    </a>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+
+              {/* Версия для планшетов и десктопов */}
+              <div className="hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 max-w-7xl mx-auto">
+                {brands.map((brand) => (
+                  <a 
+                    key={brand.id} 
+                    href={`/catalog?brand=${brand.id}`}
+                    className="group block"
+                  >
+                    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border border-gray-200 overflow-hidden aspect-square">
+                      {brand.image_url ? (
+                        <img 
+                          src={brand.image_url} 
+                          alt={brand.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-sky-100 flex items-center justify-center">
+                          <span className="text-blue-600 font-bold text-2xl sm:text-3xl">
+                            {brand.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-600 font-montserrat">Бренды скоро появятся!</p>
@@ -329,9 +449,16 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl text-white mb-6 tracking-wider">
-                ARIA TOYS - Где купить
-              </h2>
+              <div className="flex items-center justify-center mb-6">
+                <img 
+                  src="/logos/aria-toys-logo.png" 
+                  alt="ARIA TOYS"
+                  className="h-12 w-auto mr-4"
+                />
+                <h2 className="text-3xl text-white tracking-wider">
+                  - Где купить
+                </h2>
+              </div>
               <p className="text-blue-100 font-montserrat leading-relaxed text-lg max-w-3xl mx-auto">
                 Мы специализируемся на качественных детских игрушках, которые развивают воображение и творческие способности. 
                 Найдите наши игрушки в популярных интернет-магазинах!
@@ -353,7 +480,7 @@ export default function Home() {
                         Wildberries
                       </h4>
                       <a
-                        href="https://www.wildberries.ru/seller/1534088"
+                        href="https://www.wildberries.ru/seller/4349348"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block bg-purple-600 hover:bg-purple-700 text-white font-montserrat font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -370,7 +497,7 @@ export default function Home() {
                         Ozon
                       </h4>
                       <a
-                        href="https://www.ozon.ru/seller/aria-toys-1455526"
+                        href="https://www.ozon.ru/seller/aria-toys-2520310/?miniapp=seller_2520310"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-montserrat font-semibold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg"

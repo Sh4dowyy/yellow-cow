@@ -18,7 +18,6 @@ interface Toy {
   in_stock: boolean;
   sku?: string;
   age_range?: string;
-  manufacturer?: string;
   brand_id?: string;
   is_new?: boolean;
 }
@@ -31,6 +30,7 @@ interface Category {
 interface Brand {
   id: string;
   name: string;
+  image_url?: string;
 }
 
 function CatalogContent() {
@@ -46,12 +46,13 @@ function CatalogContent() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
   const categoryFilter = searchParams.get('category');
+  const brandFilter = searchParams.get('brand');
 
   useEffect(() => {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, manufacturer, brand_id, is_new');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, brand_id, is_new');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
@@ -79,7 +80,7 @@ function CatalogContent() {
 
       const { data: brandsData, error: brandsError } = await supabase
         .from('brands')
-        .select('id, name');
+        .select('id, name, image_url');
 
       if (brandsError) {
         console.error("Error fetching brands:", brandsError);
@@ -94,6 +95,13 @@ function CatalogContent() {
     fetchToysAndCategories();
   }, []);
 
+  // Set selected brand from URL parameter only when no category is selected
+  useEffect(() => {
+    if (brandFilter && brands.length > 0 && !categoryFilter && activeTab === "all") {
+      setSelectedBrand(brandFilter);
+    }
+  }, [brandFilter, brands, categoryFilter, activeTab]);
+
   useEffect(() => {
     if (!toys.length) return;
 
@@ -106,47 +114,45 @@ function CatalogContent() {
         return toy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         toy.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (toy.sku && toy.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (toy.manufacturer && toy.manufacturer.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (toy.age_range && toy.age_range.toLowerCase().includes(searchQuery.toLowerCase())) ||
         brandName.toLowerCase().includes(searchQuery.toLowerCase());
       });
     }
 
-    // Фильтрация по категории (если указана в URL)
-    if (categoryFilter && categoryFilter !== "all") {
-      filtered = filtered.filter(toy => toy.category_id === categoryFilter);
+    // Установка активной вкладки из URL (только при первой загрузке)
+    if (categoryFilter && categoryFilter !== "all" && activeTab === "all") {
       setActiveTab(categoryFilter);
-    } else if (searchQuery) {
+      return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
+    } else if ((searchQuery || brandFilter) && !categoryFilter && activeTab === "all") {
       setActiveTab("all");
     }
+    
+    // Фильтрация по выбранной вкладке
+    if (activeTab !== "all") {
+      filtered = filtered.filter(toy => toy.category_id === activeTab);
+    }
 
-    // Фильтрация по бренду
-    if (selectedBrand !== "all") {
+    // Фильтрация по бренду (только для вкладки "Все игрушки")
+    if (selectedBrand !== "all" && activeTab === "all") {
       filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
     }
 
     setFilteredToys(filtered);
-  }, [toys, searchQuery, categoryFilter, selectedBrand, brands]);
+  }, [toys, searchQuery, categoryFilter, selectedBrand, brands, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    let filtered = toys;
-    
-    // Фильтрация по категории
-    if (value !== "all") {
-      filtered = filtered.filter(toy => toy.category_id === value);
-    }
-    
-    // Фильтрация по бренду
-    if (selectedBrand !== "all") {
-      filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
-    }
-    
-    setFilteredToys(filtered);
+    // Сбрасываем бренд при смене категории
+    setSelectedBrand("all");
+    // Фильтрация будет выполнена в useEffect
   };
 
   const handleBrandChange = (brandId: string) => {
     setSelectedBrand(brandId);
+    // Если выбран бренд, переключаемся на "Все игрушки"
+    if (brandId !== "all") {
+      setActiveTab("all");
+    }
   };
 
   if (loading) {
@@ -178,7 +184,7 @@ function CatalogContent() {
               {searchQuery ? (
                 <>Найдено: "{searchQuery}"</>
               ) : (
-                <>Каталог ARIA TOYS</>
+                <>Каталог</>
               )}
             </h1>
             <p className="text-lg sm:text-xl text-blue-100 font-montserrat font-medium mb-6">
@@ -250,6 +256,7 @@ function CatalogContent() {
                 key={toy.id} 
                 product={toy} 
                 width="max-w-[180px] sm:max-w-[240px]"
+                brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
               />
             ))}
           </div>
@@ -274,6 +281,7 @@ function CatalogContent() {
                 key={toy.id} 
                 product={toy} 
                 width="max-w-[180px] sm:max-w-[240px]"
+                brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
               />
               ))}
             </div>

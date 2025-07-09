@@ -17,7 +17,7 @@ interface Product {
   in_stock?: boolean
   sku?: string
   age_range?: string
-  manufacturer?: string
+  brand_id?: string
   gender?: string
   is_new?: boolean
 }
@@ -25,9 +25,10 @@ interface Product {
 interface ProductCardProps {
   product: Product
   width?: string
+  brandName?: string
 }
 
-export default function ProductCard({ product, width = "max-w-[280px]" }: ProductCardProps) {
+export default function ProductCard({ product, width = "max-w-[280px]", brandName }: ProductCardProps) {
 
   return (
     <Link href={`/product/${product.id}`} className="block group">
@@ -76,7 +77,7 @@ export default function ProductCard({ product, width = "max-w-[280px]" }: Produc
                   borderRadius: '10px'
                 }}
               >
-                {product.manufacturer || "Производитель не указан"}
+                {brandName || "Бренд не указан"}
               </p>
               
               {/* Gender badge */}
