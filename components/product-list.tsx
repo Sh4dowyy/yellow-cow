@@ -23,7 +23,6 @@ interface Product {
   ozon_url: string
   sku?: string
   age_range?: string
-  manufacturer?: string
   brand_id?: string
   gender?: string
   is_new?: boolean
@@ -37,6 +36,7 @@ interface Category {
 interface Brand {
   id: string
   name: string
+  image_url?: string
 }
 
 interface ProductListProps {
@@ -62,7 +62,6 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     ozon_url: '',
     sku: '',
     age_range: '',
-    manufacturer: '',
     brand_id: '',
     gender: '',
     is_new: false,
@@ -83,12 +82,13 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
   }, [products])
 
   useEffect(() => {
-    const filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filtered = products.filter(product => {
+      const brandName = brands.find(brand => brand.id === product.brand_id)?.name || '';
+      return product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.manufacturer && product.manufacturer.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.age_range && product.age_range.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
+      (product.age_range && product.age_range.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      brandName.toLowerCase().includes(searchTerm.toLowerCase())
+    })
     
     // Сортируем так, чтобы новинки были первыми
     const sorted = filtered.sort((a, b) => {
@@ -115,7 +115,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
   const fetchBrands = async () => {
     const { data, error } = await supabase
       .from('brands')
-      .select('id, name')
+      .select('id, name, image_url')
 
     if (error) {
       console.error("Error fetching brands:", error)
@@ -163,7 +163,6 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       ozon_url: product.ozon_url || '',
       sku: product.sku || '',
       age_range: product.age_range || '',
-      manufacturer: product.manufacturer || '',
       brand_id: product.brand_id || '',
       gender: product.gender || '',
       is_new: product.is_new || false,
@@ -736,20 +735,6 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 value={editFormData.age_range}
                 onChange={handleEditFormChange}
                 placeholder="Например: 3-7 лет"
-                className="text-lg h-12"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-manufacturer">
-                Производитель
-              </label>
-              <Input
-                id="edit-manufacturer"
-                name="manufacturer"
-                value={editFormData.manufacturer}
-                onChange={handleEditFormChange}
-                placeholder="Введите название производителя"
                 className="text-lg h-12"
               />
             </div>

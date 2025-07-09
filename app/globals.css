@@ -69,6 +69,11 @@
     @apply bg-background text-foreground font-montserrat;
     font-family: 'Montserrat', 'Helvetica Neue', 'Arial', system-ui, sans-serif;
     font-weight: 400;
+    overflow-x: hidden;
+  }
+  
+  html {
+    overflow-x: hidden;
   }
   
   /* Заголовки используют Montserrat в качестве основного шрифта */
@@ -97,4 +102,23 @@
     font-weight: 400;
     line-height: 1.6;
   }
+}
+
+/* Скрытие полосы прокрутки для горизонтального скролла */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Улучшение touch взаимодействия */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
 }

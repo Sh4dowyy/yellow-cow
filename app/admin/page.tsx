@@ -21,7 +21,6 @@ interface Product {
   ozon_url: string
   sku?: string
   age_range?: string
-  manufacturer?: string
   brand_id?: string
   gender?: string
   is_new?: boolean
@@ -35,6 +34,7 @@ interface Category {
 interface Brand {
   id: string
   name: string
+  image_url?: string
 }
 
 
@@ -83,7 +83,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
   const fetchBrands = async () => {
     const { data, error } = await supabase
       .from('brands')
-      .select('id, name')
+      .select('id, name, image_url')
       .order('name');
 
     if (error) {
@@ -690,9 +690,11 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [brandName, setBrandName] = useState('');
+  const [brandImageFile, setBrandImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingImageFile, setEditingImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     fetchBrands();
@@ -701,7 +703,7 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
   const fetchBrands = async () => {
     const { data, error } = await supabase
       .from('brands')
-      .select('id, name')
+      .select('id, name, image_url')
       .order('name');
 
     if (error) {
@@ -713,14 +715,52 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
     setLoading(false);
   };
 
+  const uploadBrandImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `brand-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `brands/${fileName}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading brand image:', uploadError);
+        return null;
+      }
+
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Unexpected error during brand image upload:', error);
+      return null;
+    }
+  };
+
   const handleAddBrand = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let imageUrl = null;
+      
+      // Upload image if provided
+      if (brandImageFile) {
+        imageUrl = await uploadBrandImage(brandImageFile);
+        if (!imageUrl) {
+          alert('Не удалось загрузить изображение бренда');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('brands')
-        .insert([{ name: brandName }]);
+        .insert([{ name: brandName, image_url: imageUrl }]);
 
       if (error) {
         // eslint-disable-next-line no-console
@@ -728,6 +768,7 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
         alert('Не удалось добавить бренд');
       } else {
         setBrandName('');
+        setBrandImageFile(null);
         alert('Бренд успешно добавлен!');
         fetchBrands(); // Refresh the list
         if (onBrandChanged) {
@@ -746,11 +787,13 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
   const handleEdit = (id: string, name: string) => {
     setEditingId(id);
     setEditingName(name);
+    setEditingImageFile(null);
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditingName('');
+    setEditingImageFile(null);
   };
 
   const handleUpdateBrand = async (id: string) => {
@@ -760,9 +803,21 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
     }
 
     try {
+      let updateData: { name: string; image_url?: string } = { name: editingName.trim() };
+      
+      // Upload new image if provided
+      if (editingImageFile) {
+        const imageUrl = await uploadBrandImage(editingImageFile);
+        if (!imageUrl) {
+          alert('Не удалось загрузить изображение бренда');
+          return;
+        }
+        updateData.image_url = imageUrl;
+      }
+
       const { error } = await supabase
         .from('brands')
-        .update({ name: editingName.trim() })
+        .update(updateData)
         .eq('id', id);
 
       if (error) {
@@ -773,6 +828,7 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
         alert('Бренд успешно обновлен!');
         setEditingId(null);
         setEditingName('');
+        setEditingImageFile(null);
         fetchBrands(); // Refresh the list
         if (onBrandChanged) {
           onBrandChanged();
@@ -834,6 +890,19 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700" htmlFor="brandImage">
+              Изображение бренда
+            </label>
+            <input
+              type="file"
+              id="brandImage"
+              onChange={(e) => setBrandImageFile(e.target.files ? e.target.files[0] : null)}
+              accept="image/*"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">Рекомендуется квадратное изображение (например, 400x400px)</p>
+          </div>
           <button 
             type="submit" 
             disabled={isSubmitting || !brandName.trim()}
@@ -862,18 +931,44 @@ const BrandManagement = ({ onBrandChanged }: { onBrandChanged?: () => void }) =>
               <div className="space-y-2">
                 {brands.map((brand) => (
                   <div key={brand.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-                    <div className="flex-1 mr-4">
-                      {editingId === brand.id ? (
-                        <input
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          className="w-full border border-gray-300 rounded-md shadow-sm p-2 font-montserrat font-semibold text-gray-800"
-                          autoFocus
-                        />
-                      ) : (
-                        <h4 className="font-montserrat font-semibold text-gray-800">{brand.name}</h4>
-                      )}
+                    <div className="flex items-center flex-1 mr-4">
+                      {/* Brand Image */}
+                      <div className="w-12 h-12 mr-4 flex-shrink-0">
+                        {brand.image_url ? (
+                          <img 
+                            src={brand.image_url} 
+                            alt={brand.name}
+                            className="w-full h-full object-cover rounded-lg border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
+                            <span className="text-gray-400 text-xs">Нет фото</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Brand Name */}
+                      <div className="flex-1">
+                        {editingId === brand.id ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="w-full border border-gray-300 rounded-md shadow-sm p-2 font-montserrat font-semibold text-gray-800"
+                              autoFocus
+                            />
+                            <input
+                              type="file"
+                              onChange={(e) => setEditingImageFile(e.target.files ? e.target.files[0] : null)}
+                              accept="image/*"
+                              className="w-full border border-gray-300 rounded-md shadow-sm p-1 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <h4 className="font-montserrat font-semibold text-gray-800">{brand.name}</h4>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {editingId === brand.id ? (
@@ -954,7 +1049,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, brand_id, gender, is_new')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -974,7 +1069,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, manufacturer, brand_id, gender, is_new')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new')
 
     if (productsError) {
       // eslint-disable-next-line no-console
