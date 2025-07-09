@@ -1,7 +1,6 @@
 "use client"
 
 import ProductCard from "@/components/product-card"
-import ContactButton from "@/components/contact-button"
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -173,7 +172,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 py-12 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 py-4 overflow-hidden">
         {/* Animated Stars Background */}
         <div className="absolute inset-0">
           {/* Large Sky Stars */}
@@ -182,9 +181,6 @@ export default function Home() {
           </div>
           <div className="absolute top-20 right-20 w-6 h-6 transform -rotate-12">
             <div className="text-sky-400 text-3xl">⭐</div>
-          </div>
-          <div className="absolute bottom-16 left-1/4 w-6 h-6 transform rotate-45">
-            <div className="text-sky-300 text-3xl">⭐</div>
           </div>
           <div className="absolute top-1/3 right-1/3 w-4 h-4 transform -rotate-45">
             <div className="text-sky-400 text-2xl">⭐</div>
@@ -209,26 +205,25 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             {/* ARIA TOYS Logo */}
-            <div className="mb-8">
+            <div className="mb-6">
               <img 
                 src="/logos/aria-toys-logo.png" 
                 alt="ARIA TOYS"
-                className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto mx-auto mb-4"
+                className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto mx-auto mb-3"
               />
               <div className="w-20 h-2 bg-gradient-to-r from-sky-400 to-blue-500 rounded-full mx-auto"></div>
             </div>
             
-            
-            <p className="text-lg sm:text-xl md:text-2xl font-montserrat font-bold text-white mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl font-montserrat font-bold text-white mb-6 leading-relaxed">
               Волшебный мир детских игрушек!
             </p>
-            <p className="text-base sm:text-lg font-montserrat font-medium text-blue-100 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg font-montserrat font-medium text-blue-100 mb-8 leading-relaxed max-w-2xl mx-auto">
               Подарите вашему ребенку радость и развитие с качественными игрушками. 
               От развивающих конструкторов до мягких плюшевых друзей!
             </p>
             
             {/* Call to Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 max-w-4xl mx-auto">
               <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Открыть каталог
               </a>
@@ -478,9 +473,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Contact Button */}
-      <ContactButton />
     </div>
   )
 }

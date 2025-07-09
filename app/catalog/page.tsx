@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/product-card"
-import ContactButton from "@/components/contact-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
@@ -295,9 +294,6 @@ function CatalogContent() {
         ))}
       </Tabs>
       </div>
-
-      {/* Contact Button */}
-      <ContactButton />
     </div>
   )
 }

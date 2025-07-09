@@ -377,9 +377,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           </div>
         )}
       </div>
-
-      {/* Contact Button */}
-      <ContactButton />
     </div>
   )
 }
