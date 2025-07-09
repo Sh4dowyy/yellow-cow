@@ -113,8 +113,3 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-
-/* Улучшение touch взаимодействия для карусели */
-.carousel-container {
-  touch-action: manipulation;
-}
