@@ -2,8 +2,9 @@
 
 import ProductCard from "@/components/product-card"
 import ContactButton from "@/components/contact-button"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Product {
   id: string
@@ -35,51 +36,41 @@ export default function Home() {
   const [brands, setBrands] = useState<BrandWithCount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(0)
-  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
-  const [touchEnd, setTouchEnd] = useState<{x: number, y: number} | null>(null)
-  const toysPerPage = 5
-  const mobileToysPerPage = 4
+    const desktopScrollRef = useRef<HTMLDivElement>(null)
 
-  // Функции для обработки touch событий
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    })
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    })
-  }
-
-  const handleTouchEnd = (isMobile: boolean) => {
-    if (!touchStart || !touchEnd) return
-    
-    const distanceX = touchStart.x - touchEnd.x
-    const distanceY = touchStart.y - touchEnd.y
-    const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY)
-    
-    // Только обрабатываем горизонтальные свайпы
-    if (isHorizontalSwipe) {
-      const isLeftSwipe = distanceX > 50
-      const isRightSwipe = distanceX < -50
-      
-      const currentToysPerPage = isMobile ? mobileToysPerPage : toysPerPage
-      const totalPages = Math.ceil(popularToys.length / currentToysPerPage)
-      
-      if (isLeftSwipe && currentPage < totalPages - 1) {
-        setCurrentPage(currentPage + 1)
-      }
-      if (isRightSwipe && currentPage > 0) {
-        setCurrentPage(currentPage - 1)
-      }
+  // Функции для скролла на десктопе
+  const scrollLeft = () => {
+    if (desktopScrollRef.current) {
+      desktopScrollRef.current.scrollBy({
+        left: -300,
+        behavior: 'smooth'
+      })
     }
-    // Если это вертикальный свайп, ничего не делаем - позволяем браузеру обрабатывать скролл
+  }
+
+  const scrollRight = () => {
+    if (desktopScrollRef.current) {
+      desktopScrollRef.current.scrollBy({
+        left: 300,
+        behavior: 'smooth'
+      })
+    }
+  }
+
+  // Функция для скролла с учетом высоты хедера
+  const scrollToSection = (elementId: string) => {
+    const element = document.getElementById(elementId)
+    if (element) {
+      // Получаем реальную высоту хедера
+      const header = document.querySelector('header') || document.querySelector('nav')
+      const headerHeight = header ? header.offsetHeight + 20 : 100 // +20px дополнительный отступ
+      const elementPosition = element.offsetTop - headerHeight
+      
+      window.scrollTo({
+        top: elementPosition,
+        behavior: 'smooth'
+      })
+    }
   }
 
   useEffect(() => {
@@ -162,15 +153,7 @@ export default function Home() {
     fetchData()
   }, [])
 
-  // Сброс текущей страницы при изменении размера экрана
-  useEffect(() => {
-    const handleResize = () => {
-      setCurrentPage(0)
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -190,7 +173,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Banner */}
-      <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 py-12 overflow-hidden">
         {/* Animated Stars Background */}
         <div className="absolute inset-0">
           {/* Large Sky Stars */}
@@ -246,20 +229,19 @@ export default function Home() {
             
             {/* Call to Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 max-w-4xl mx-auto">
-              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
+              <a href="/catalog" className="bg-sky-400 hover:bg-sky-500 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Открыть каталог
               </a>
-              <button onClick={() => document.getElementById('popular-toys')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
+              <button onClick={() => scrollToSection('popular-toys')} className="bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Популярные игрушки
               </button>
-              <button onClick={() => document.getElementById('brands')?.scrollIntoView({ behavior: 'smooth' })} className="bg-blue-500 hover:bg-blue-600 text-white tracking-wide py-4 px-6 sm:px-8 rounded-full text-base sm:text-lg transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
+              <button onClick={() => scrollToSection('brands')} className="bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Бренды
               </button>
             </div>
             
             <div className="text-center">
               <p className="text-blue-100 font-montserrat font-medium mb-2">Найдите идеальную игрушку для вашего ребенка!</p>
-              <p className="text-blue-200 font-montserrat text-sm">Используйте поиск или выберите категорию в меню</p>
             </div>
           </div>
         </div>
@@ -269,99 +251,55 @@ export default function Home() {
       <section id="popular-toys" className="py-24 bg-white">
         <div className="container mx-auto px-2 sm:px-4">
                       <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4 tracking-wider">
-                Популярные игрушки
-              </h2>
+                          <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4">
+              Популярные игрушки
+            </h2>
               <p className="text-base sm:text-lg text-blue-600 font-montserrat font-medium">Самые любимые игрушки наших маленьких покупателей!</p>
             </div>
           
-          {popularToys.length > 0 ? (
+                    {popularToys.length > 0 ? (
             <>
-              {/* Мобильная версия с touch-свайпом */}
-              <div className="block sm:hidden">
-                <div className="overflow-hidden carousel-container">
-                  <div 
-                    className="flex transition-transform duration-300 ease-in-out"
-                    style={{
-                      transform: `translateX(-${currentPage * 100}%)`
-                    }}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={() => handleTouchEnd(true)}
-                  >
-                    {Array.from({ length: Math.ceil(popularToys.length / mobileToysPerPage) }).map((_, pageIndex) => (
-                      <div key={pageIndex} className="w-full flex-shrink-0">
-                        <div className="grid grid-cols-2 gap-3 px-2 py-8">
-                          {popularToys
-                            .slice(pageIndex * mobileToysPerPage, (pageIndex + 1) * mobileToysPerPage)
-                            .map((toy) => (
-                              <ProductCard key={toy.id} product={toy} width="max-w-[180px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
-                            ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Мобильная версия с горизонтальным скроллом */}
+              <div className="block sm:hidden overflow-hidden">
+                <div className="flex gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide">
+                  {popularToys.map((toy) => (
+                    <div key={toy.id} className="flex-shrink-0">
+                      <ProductCard product={toy} width="w-[160px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
+                    </div>
+                  ))}
                 </div>
-
-                {/* Page Indicators для мобильной версии */}
-                {Math.ceil(popularToys.length / mobileToysPerPage) > 1 && (
-                  <div className="flex justify-center mt-8 gap-2">
-                    {Array.from({ length: Math.ceil(popularToys.length / mobileToysPerPage) }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index)}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          index === currentPage 
-                            ? 'bg-sky-500' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
 
-              {/* Десктопная версия */}
-              <div className="hidden sm:block">
-                                 <div className="overflow-hidden carousel-container">
-                   <div 
-                     className="flex transition-transform duration-300 ease-in-out"
-                     style={{
-                       transform: `translateX(-${currentPage * 100}%)`
-                     }}
-                     onTouchStart={handleTouchStart}
-                     onTouchMove={handleTouchMove}
-                     onTouchEnd={() => handleTouchEnd(false)}
-                   >
-                    {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, pageIndex) => (
-                      <div key={pageIndex} className="w-full flex-shrink-0">
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8 px-4 py-8">
-                          {popularToys
-                            .slice(pageIndex * toysPerPage, (pageIndex + 1) * toysPerPage)
-                            .map((toy) => (
-                              <ProductCard key={toy.id} product={toy} width="max-w-[240px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
-                            ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Десктопная версия с горизонтальным скроллом и кнопками */}
+              <div className="hidden sm:block relative overflow-hidden">
+                <div 
+                  ref={desktopScrollRef}
+                  className="flex gap-6 overflow-x-auto pb-4 px-4 scrollbar-hide"
+                >
+                  {popularToys.map((toy) => (
+                    <div key={toy.id} className="flex-shrink-0">
+                      <ProductCard product={toy} width="w-[240px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
+                    </div>
+                  ))}
                 </div>
 
-                {/* Page Indicators для десктопной версии */}
-                {Math.ceil(popularToys.length / toysPerPage) > 1 && (
-                  <div className="flex justify-center mt-8 gap-2">
-                    {Array.from({ length: Math.ceil(popularToys.length / toysPerPage) }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPage(index)}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          index === currentPage 
-                            ? 'bg-sky-500' 
-                            : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
-                      />
-                    ))}
-                  </div>
+                {/* Кнопки навигации для десктопа */}
+                {popularToys.length > 4 && (
+                  <>
+                    <button
+                      onClick={scrollLeft}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center transition-all hover:bg-sky-50 hover:border-sky-200 z-10"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+
+                    <button
+                      onClick={scrollRight}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center transition-all hover:bg-sky-50 hover:border-sky-200 z-10"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </>
                 )}
               </div>
             </>
@@ -377,7 +315,7 @@ export default function Home() {
       <section id="brands" className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4 tracking-wider">
+            <h2 className="text-3xl sm:text-4xl text-blue-700 mb-4">
               Бренды
             </h2>
             <p className="text-base sm:text-lg text-blue-600 font-montserrat font-medium">
@@ -468,7 +406,7 @@ export default function Home() {
                   alt="ARIA TOYS"
                   className="h-12 w-auto mr-4"
                 />
-                <h2 className="text-3xl text-white tracking-wider">
+                <h2 className="text-3xl text-white">
                   - Где купить
                 </h2>
               </div>
@@ -481,7 +419,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto">
               {/* Our Stores */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-                <h3 className="text-2xl text-white mb-8 text-center tracking-wide">
+                <h3 className="text-2xl text-white mb-8 text-center">
                   🛍️ Наши магазины
                 </h3>
                 
