@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { X, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -16,7 +16,7 @@ interface CategorySidebarProps {
   onClose: () => void
 }
 
-export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProps) {
+function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -193,5 +193,32 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
         </div>
       </div>
     </>
+  )
+}
+
+export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProps) {
+  return (
+    <Suspense fallback={
+      <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-montserrat font-bold text-gray-800">Категории</h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Закрыть меню"
+          >
+            <X size={20} className="text-gray-600" />
+          </button>
+        </div>
+        <div className="p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto"></div>
+          <p className="mt-2 text-gray-600 font-montserrat">Загрузка...</p>
+        </div>
+      </div>
+    }>
+      <CategorySidebarContent isOpen={isOpen} onClose={onClose} />
+    </Suspense>
   )
 } 
