@@ -205,6 +205,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   src={currentImage}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-contain p-6 hover:scale-105 transition-transform duration-300"
                   priority
                 />
@@ -228,6 +229,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       src={imageUrl}
                       alt={`${product.name} - изображение ${index + 1}`}
                       fill
+                      sizes="80px"
                       className="object-contain p-1"
                     />
                   </button>

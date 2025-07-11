@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { X, ChevronRight } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/utils/supabase/supabaseClient"
 
 interface Category {
@@ -22,6 +22,10 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
   const [error, setError] = useState<string | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get current category from URL
+  const currentCategory = searchParams.get('category')
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -78,6 +82,9 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
     onClose()
   }
 
+  // Check if we're on catalog page without category filter (all products)
+  const isAllProductsActive = !currentCategory
+
   return (
     <>
       {/* Overlay */}
@@ -123,12 +130,24 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
               {/* Все товары */}
               <button
                 onClick={handleAllProductsClick}
-                className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors group"
+                className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                  isAllProductsActive 
+                    ? 'bg-sky-50 border-r-4 border-sky-500' 
+                    : 'hover:bg-gray-50'
+                }`}
               >
-                <span className="font-medium font-montserrat text-gray-800 group-hover:text-sky-600">
+                <span className={`font-medium font-montserrat ${
+                  isAllProductsActive 
+                    ? 'text-sky-600 font-semibold' 
+                    : 'text-gray-800 group-hover:text-sky-600'
+                }`}>
                   Все товары
                 </span>
-                <ChevronRight size={16} className="text-gray-400 group-hover:text-sky-600 transition-colors" />
+                <ChevronRight size={16} className={`transition-colors ${
+                  isAllProductsActive 
+                    ? 'text-sky-600' 
+                    : 'text-gray-400 group-hover:text-sky-600'
+                }`} />
               </button>
 
               {/* Разделитель */}
@@ -136,18 +155,34 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
 
               {/* Категории */}
               {categories.length > 0 ? (
-                categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategoryClick(category.id)}
-                    className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors group"
-                  >
-                    <span className="font-medium font-montserrat text-gray-700 group-hover:text-sky-600">
-                      {category.name}
-                    </span>
-                    <ChevronRight size={16} className="text-gray-400 group-hover:text-sky-600 transition-colors" />
-                  </button>
-                ))
+                categories.map((category) => {
+                  const isActive = currentCategory === category.id
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryClick(category.id)}
+                      className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                        isActive 
+                          ? 'bg-sky-50 border-r-4 border-sky-500' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className={`font-medium font-montserrat ${
+                        isActive 
+                          ? 'text-sky-600 font-semibold' 
+                          : 'text-gray-700 group-hover:text-sky-600'
+                      }`}>
+                        {category.name}
+                      </span>
+                      <ChevronRight size={16} className={`transition-colors ${
+                        isActive 
+                          ? 'text-sky-600' 
+                          : 'text-gray-400 group-hover:text-sky-600'
+                      }`} />
+                    </button>
+                  )
+                })
               ) : (
                 <div className="px-6 py-8 text-center">
                   <p className="text-gray-500 font-montserrat">Категории не найдены</p>

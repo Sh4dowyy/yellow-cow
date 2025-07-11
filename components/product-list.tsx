@@ -370,6 +370,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                     src={product.image_url || "/placeholder.svg"} 
                     alt={product.name} 
                     fill 
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     className="object-contain p-4" 
                   />
                   {product.is_featured && (
@@ -552,6 +553,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                       src={editFormData.image_url}
                       alt="Current main image"
                       fill
+                      sizes="80px"
                       className="object-contain p-1 rounded"
                     />
                   </div>
@@ -585,6 +587,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                             src={url}
                             alt={`Additional image ${index + 1}`}
                             fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                             className="object-contain p-2"
                           />
                           

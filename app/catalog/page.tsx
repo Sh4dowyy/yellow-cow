@@ -6,6 +6,7 @@ import ProductCard from "@/components/product-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
+import { useRouter } from "next/navigation";
 
 interface Toy {
   id: string;
@@ -46,6 +47,47 @@ function CatalogContent() {
   const searchQuery = searchParams.get('search');
   const categoryFilter = searchParams.get('category');
   const brandFilter = searchParams.get('brand');
+
+  const router = useRouter();
+
+  // Восстановление позиции скролла при возврате
+  useEffect(() => {
+    if (!loading && toys.length > 0 && filteredToys.length >= 0) {
+      const savedScrollPosition = sessionStorage.getItem('catalog-scroll-position');
+      
+      if (savedScrollPosition) {
+        console.log('Восстанавливаем позицию скролла:', savedScrollPosition); // Для отладки
+        setTimeout(() => {
+          window.scrollTo({
+            top: parseInt(savedScrollPosition),
+            behavior: 'auto'
+          });
+          // Очищаем сохраненную позицию после восстановления
+          sessionStorage.removeItem('catalog-scroll-position');
+        }, 300);
+      }
+    }
+  }, [loading, toys.length, filteredToys.length]);
+
+  // Сохранение позиции скролла при переходе на страницу товара
+  useEffect(() => {
+    const handleLinkClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      if (link && link.href.includes('/product/')) {
+        const scrollY = window.scrollY;
+        console.log('Сохраняем позицию скролла:', scrollY); // Для отладки
+        sessionStorage.setItem('catalog-scroll-position', scrollY.toString());
+      }
+    };
+
+    // Сохраняем позицию при клике на ссылки товаров
+    document.addEventListener('click', handleLinkClick);
+
+    return () => {
+      document.removeEventListener('click', handleLinkClick);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchToysAndCategories = async () => {
@@ -118,12 +160,19 @@ function CatalogContent() {
       });
     }
 
-    // Установка активной вкладки из URL (только при первой загрузке)
-    if (categoryFilter && categoryFilter !== "all" && activeTab === "all") {
-      setActiveTab(categoryFilter);
-      return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
-    } else if ((searchQuery || brandFilter) && !categoryFilter && activeTab === "all") {
-      setActiveTab("all");
+    // Установка активной вкладки из URL - исправленная логика
+    if (categoryFilter && categoryFilter !== "all") {
+      // Если в URL есть категория, и она отличается от текущей активной вкладки
+      if (activeTab !== categoryFilter) {
+        setActiveTab(categoryFilter);
+        return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
+      }
+    } else if (!categoryFilter) {
+      // Если в URL нет категории, но активная вкладка не "all"
+      if (activeTab !== "all") {
+        setActiveTab("all");
+        return;
+      }
     }
     
     // Фильтрация по выбранной вкладке
@@ -143,7 +192,17 @@ function CatalogContent() {
     setActiveTab(value);
     // Сбрасываем бренд при смене категории
     setSelectedBrand("all");
-    // Фильтрация будет выполнена в useEffect
+    
+    // Обновляем URL для синхронизации только если нужно
+    if (value === "all") {
+      if (categoryFilter) {
+        router.push('/catalog');
+      }
+    } else {
+      if (categoryFilter !== value) {
+        router.push(`/catalog?category=${value}`);
+      }
+    }
   };
 
   const handleBrandChange = (brandId: string) => {
@@ -151,6 +210,14 @@ function CatalogContent() {
     // Если выбран бренд, переключаемся на "Все игрушки"
     if (brandId !== "all") {
       setActiveTab("all");
+      if (brandFilter !== brandId) {
+        router.push(`/catalog?brand=${brandId}`);
+      }
+    } else {
+      // Если сбрасываем бренд, возвращаемся к каталогу без параметров
+      if (brandFilter) {
+        router.push('/catalog');
+      }
     }
   };
 
@@ -204,46 +271,48 @@ function CatalogContent() {
       <div className="container mx-auto px-2 sm:px-4 py-12">
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-12">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-6">Выберите категорию</h2>
-        </div>
-        <div className="flex justify-center mb-28 px-2">
-          <TabsList className="inline-flex flex-wrap gap-2 sm:gap-1 justify-center bg-transparent border-0 p-0">
-            <TabsTrigger
-              value="all"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap"
-            >
-              Все игрушки
-            </TabsTrigger>
-            {categories.map((category) => (
+        <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-3 sm:p-4 mx-2 sm:mx-4 shadow-sm">
+          <div className="text-center mb-4">
+            <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-4">Выберите категорию</h2>
+          </div>
+          <div className="flex justify-center mb-4 px-2">
+            <TabsList className="inline-flex flex-wrap gap-2 sm:gap-1 justify-center bg-transparent border-0 p-0">
               <TabsTrigger
-                key={category.id}
-                value={category.id}
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap"
+                value="all"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
               >
-                {category.name}
+                Все игрушки
               </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {/* Brand Filter */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <h3 className="text-lg font-montserrat font-semibold text-blue-700">Фильтр по бренду:</h3>
-            <Select value={selectedBrand} onValueChange={handleBrandChange}>
-              <SelectTrigger className="w-[200px] sm:w-[250px]">
-                <SelectValue placeholder="Все бренды" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все бренды</SelectItem>
-                {brands.map((brand) => (
-                  <SelectItem key={brand.id} value={brand.id}>
-                    {brand.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {categories.map((category) => (
+                <TabsTrigger
+                  key={category.id}
+                  value={category.id}
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
+                >
+                  {category.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          
+          {/* Brand Filter */}
+          <div className="border-t border-gray-300 pt-4 mt-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <h3 className="text-lg font-montserrat font-semibold text-blue-700">Фильтр по бренду:</h3>
+              <Select value={selectedBrand} onValueChange={handleBrandChange}>
+                <SelectTrigger className="w-[200px] sm:w-[250px] font-montserrat">
+                  <SelectValue placeholder="Все бренды" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="font-montserrat">Все бренды</SelectItem>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand.id} value={brand.id} className="font-montserrat">
+                      {brand.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
