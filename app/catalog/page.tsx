@@ -295,6 +295,7 @@ function CatalogContent() {
             </TabsList>
           </div>
           
+          
           {/* Brand Filter */}
           <div className="border-t border-gray-300 pt-4 mt-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
