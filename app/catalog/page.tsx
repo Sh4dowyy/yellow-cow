@@ -281,10 +281,10 @@ function CatalogContent() {
             <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-4">Выберите категорию</h2>
           </div>
           <div className="flex justify-center mb-4 px-1">
-            <TabsList className="inline-flex flex-wrap gap-1.5 sm:gap-2 justify-center bg-transparent border-0 p-0.5 max-w-full">
+            <TabsList className="inline-flex flex-wrap gap-2 sm:gap-3 justify-center bg-transparent border-0 p-1 max-w-full">
               <TabsTrigger
                 value="all"
-                className="border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600"
+                className="border-2 border-blue-300 rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 font-bold text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600"
               >
                 Все игрушки
               </TabsTrigger>
@@ -292,7 +292,7 @@ function CatalogContent() {
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className="border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600"
+                  className="border-2 border-blue-300 rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 font-bold text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600"
                 >
                   {category.name}
                 </TabsTrigger>
@@ -308,9 +308,6 @@ function CatalogContent() {
               <h3 className="text-lg font-montserrat font-bold text-blue-800 text-center">
                 Фильтр по бренду:
               </h3>
-              <p className="text-sm text-blue-600 text-center font-montserrat">
-                Работает для всех категорий
-              </p>
               <Select value={selectedBrand} onValueChange={handleBrandChange}>
                 <SelectTrigger className="w-full sm:w-[280px] h-12 bg-white border-blue-300 hover:border-blue-500 transition-colors font-montserrat">
                   <SelectValue placeholder="Все бренды" />
