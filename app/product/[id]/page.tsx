@@ -197,16 +197,17 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Image Gallery Section */}
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-full overflow-hidden">
             {/* Main Image */}
-            <Card className="p-2 bg-white shadow-lg border-0">
-              <div className="relative h-96 lg:h-[500px] bg-white rounded-lg overflow-hidden">
+            <Card className="p-2 bg-white shadow-lg border-0 max-w-full">
+              <div className="relative w-full h-96 lg:h-[500px] bg-white rounded-lg overflow-hidden">
                 <Image
                   src={currentImage}
                   alt={product.name}
                   fill
-                  className="object-contain p-6 hover:scale-105 transition-transform duration-300"
+                  className="object-contain p-4 lg:p-6 hover:scale-105 transition-transform duration-300"
                   priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               </div>
             </Card>
