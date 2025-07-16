@@ -206,7 +206,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-contain p-4 lg:p-6 hover:scale-105 transition-transform duration-300"
+                  className="object-contain p-6 hover:scale-105 transition-transform duration-300"
                   priority
                 />
               </div>
