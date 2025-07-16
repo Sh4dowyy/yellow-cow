@@ -6,6 +6,7 @@ import ProductCard from "@/components/product-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
+import { useRouter } from "next/navigation";
 
 interface Toy {
   id: string;
@@ -46,6 +47,47 @@ function CatalogContent() {
   const searchQuery = searchParams.get('search');
   const categoryFilter = searchParams.get('category');
   const brandFilter = searchParams.get('brand');
+
+  const router = useRouter();
+
+  // Восстановление позиции скролла при возврате
+  useEffect(() => {
+    if (!loading && toys.length > 0 && filteredToys.length >= 0) {
+      const savedScrollPosition = sessionStorage.getItem('catalog-scroll-position');
+      
+      if (savedScrollPosition) {
+        console.log('Восстанавливаем позицию скролла:', savedScrollPosition); // Для отладки
+        setTimeout(() => {
+          window.scrollTo({
+            top: parseInt(savedScrollPosition),
+            behavior: 'auto'
+          });
+          // Очищаем сохраненную позицию после восстановления
+          sessionStorage.removeItem('catalog-scroll-position');
+        }, 300);
+      }
+    }
+  }, [loading, toys.length, filteredToys.length]);
+
+  // Сохранение позиции скролла при переходе на страницу товара
+  useEffect(() => {
+    const handleLinkClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      if (link && link.href.includes('/product/')) {
+        const scrollY = window.scrollY;
+        console.log('Сохраняем позицию скролла:', scrollY); // Для отладки
+        sessionStorage.setItem('catalog-scroll-position', scrollY.toString());
+      }
+    };
+
+    // Сохраняем позицию при клике на ссылки товаров
+    document.addEventListener('click', handleLinkClick);
+
+    return () => {
+      document.removeEventListener('click', handleLinkClick);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchToysAndCategories = async () => {
@@ -118,12 +160,19 @@ function CatalogContent() {
       });
     }
 
-    // Установка активной вкладки из URL (только при первой загрузке)
-    if (categoryFilter && categoryFilter !== "all" && activeTab === "all") {
-      setActiveTab(categoryFilter);
-      return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
-    } else if ((searchQuery || brandFilter) && !categoryFilter && activeTab === "all") {
-      setActiveTab("all");
+    // Установка активной вкладки из URL - исправленная логика
+    if (categoryFilter && categoryFilter !== "all") {
+      // Если в URL есть категория, и она отличается от текущей активной вкладки
+      if (activeTab !== categoryFilter) {
+        setActiveTab(categoryFilter);
+        return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
+      }
+    } else if (!categoryFilter) {
+      // Если в URL нет категории, но активная вкладка не "all"
+      if (activeTab !== "all") {
+        setActiveTab("all");
+        return;
+      }
     }
     
     // Фильтрация по выбранной вкладке
@@ -143,7 +192,17 @@ function CatalogContent() {
     setActiveTab(value);
     // Сбрасываем бренд при смене категории
     setSelectedBrand("all");
-    // Фильтрация будет выполнена в useEffect
+    
+    // Обновляем URL для синхронизации только если нужно
+    if (value === "all") {
+      if (categoryFilter) {
+        router.push('/catalog');
+      }
+    } else {
+      if (categoryFilter !== value) {
+        router.push(`/catalog?category=${value}`);
+      }
+    }
   };
 
   const handleBrandChange = (brandId: string) => {
@@ -151,6 +210,14 @@ function CatalogContent() {
     // Если выбран бренд, переключаемся на "Все игрушки"
     if (brandId !== "all") {
       setActiveTab("all");
+      if (brandFilter !== brandId) {
+        router.push(`/catalog?brand=${brandId}`);
+      }
+    } else {
+      // Если сбрасываем бренд, возвращаемся к каталогу без параметров
+      if (brandFilter) {
+        router.push('/catalog');
+      }
     }
   };
 
