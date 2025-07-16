@@ -211,6 +211,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 />
               </div>
             </Card>
+            
 
             {/* Image Thumbnails */}
             {allImages.length > 1 && (

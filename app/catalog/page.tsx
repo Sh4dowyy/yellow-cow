@@ -271,15 +271,15 @@ function CatalogContent() {
       <div className="container mx-auto px-2 sm:px-4 py-12">
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-12">
-        <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-3 sm:p-4 mx-2 sm:mx-4 shadow-sm">
+        <div className="p-3 sm:p-4 mx-2 sm:mx-4">
           <div className="text-center mb-4">
             <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-4">Выберите категорию</h2>
           </div>
-          <div className="flex justify-center mb-4 px-2">
-            <TabsList className="inline-flex flex-wrap gap-2 sm:gap-1 justify-center bg-transparent border-0 p-0">
+          <div className="flex justify-center mb-4 px-1">
+            <TabsList className="inline-flex flex-wrap gap-1.5 sm:gap-2 justify-center bg-transparent border-0 p-0.5 max-w-full">
               <TabsTrigger
                 value="all"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
+                className="border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600"
               >
                 Все игрушки
               </TabsTrigger>
@@ -287,21 +287,24 @@ function CatalogContent() {
                 <TabsTrigger
                   key={category.id}
                   value={category.id}
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
+                  className="border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600"
                 >
                   {category.name}
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
-          
-          
-          {/* Brand Filter */}
-          <div className="border-t border-gray-300 pt-4 mt-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-              <h3 className="text-lg font-montserrat font-semibold text-blue-700">Фильтр по бренду:</h3>
+        </div>
+
+        {/* Brand Filter - Separate Section */}
+        <div className="mb-8 mt-20">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-blue-200 p-6 mx-2 sm:mx-4 shadow-lg">
+            <div className="flex flex-col gap-4 items-center">
+              <h3 className="text-lg font-montserrat font-bold text-blue-800 text-center">
+                Фильтр по бренду:
+              </h3>
               <Select value={selectedBrand} onValueChange={handleBrandChange}>
-                <SelectTrigger className="w-[200px] sm:w-[250px] font-montserrat">
+                <SelectTrigger className="w-full sm:w-[280px] h-12 bg-white border-blue-300 hover:border-blue-500 transition-colors font-montserrat">
                   <SelectValue placeholder="Все бренды" />
                 </SelectTrigger>
                 <SelectContent>
