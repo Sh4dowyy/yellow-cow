@@ -136,12 +136,12 @@ function CatalogContent() {
     fetchToysAndCategories();
   }, []);
 
-  // Set selected brand from URL parameter only when no category is selected
+  // Set selected brand from URL parameter for all categories
   useEffect(() => {
-    if (brandFilter && brands.length > 0 && !categoryFilter && activeTab === "all") {
+    if (brandFilter && brands.length > 0) {
       setSelectedBrand(brandFilter);
     }
-  }, [brandFilter, brands, categoryFilter, activeTab]);
+  }, [brandFilter, brands]);
 
   useEffect(() => {
     if (!toys.length) return;
@@ -180,8 +180,8 @@ function CatalogContent() {
       filtered = filtered.filter(toy => toy.category_id === activeTab);
     }
 
-    // Фильтрация по бренду (только для вкладки "Все игрушки")
-    if (selectedBrand !== "all" && activeTab === "all") {
+    // Фильтрация по бренду (для всех категорий)
+    if (selectedBrand !== "all") {
       filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
     }
 
@@ -190,8 +190,7 @@ function CatalogContent() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Сбрасываем бренд при смене категории
-    setSelectedBrand("all");
+    // Сохраняем выбранный бренд при смене категории
     
     // Обновляем URL для синхронизации только если нужно
     if (value === "all") {
@@ -207,15 +206,21 @@ function CatalogContent() {
 
   const handleBrandChange = (brandId: string) => {
     setSelectedBrand(brandId);
-    // Если выбран бренд, переключаемся на "Все игрушки"
+    
+    // Обновляем URL с учетом текущей категории и выбранного бренда
     if (brandId !== "all") {
-      setActiveTab("all");
-      if (brandFilter !== brandId) {
-        router.push(`/catalog?brand=${brandId}`);
+      // Если выбран бренд, добавляем его в URL вместе с текущей категорией
+      const params = new URLSearchParams();
+      if (activeTab !== "all") {
+        params.set('category', activeTab);
       }
+      params.set('brand', brandId);
+      router.push(`/catalog?${params.toString()}`);
     } else {
-      // Если сбрасываем бренд, возвращаемся к каталогу без параметров
-      if (brandFilter) {
+      // Если сбрасываем бренд, оставляем только категорию в URL
+      if (activeTab !== "all") {
+        router.push(`/catalog?category=${activeTab}`);
+      } else {
         router.push('/catalog');
       }
     }
@@ -303,6 +308,9 @@ function CatalogContent() {
               <h3 className="text-lg font-montserrat font-bold text-blue-800 text-center">
                 Фильтр по бренду:
               </h3>
+              <p className="text-sm text-blue-600 text-center font-montserrat">
+                Работает для всех категорий
+              </p>
               <Select value={selectedBrand} onValueChange={handleBrandChange}>
                 <SelectTrigger className="w-full sm:w-[280px] h-12 bg-white border-blue-300 hover:border-blue-500 transition-colors font-montserrat">
                   <SelectValue placeholder="Все бренды" />
