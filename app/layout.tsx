@@ -22,6 +22,16 @@ const bebasNeue = Bebas_Neue({
 export const metadata: Metadata = {
   title: "Aria Toys - Детские игрушки",
   description: "Интернет-магазин качественных детских игрушек",
+  icons: {
+    icon: [
+      {
+        url: '/icon.svg',
+        type: 'image/svg+xml',
+      }
+    ],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({

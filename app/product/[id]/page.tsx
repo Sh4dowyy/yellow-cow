@@ -230,6 +230,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       src={imageUrl}
                       alt={`${product.name} - изображение ${index + 1}`}
                       fill
+                      sizes="80px"
                       className="object-contain p-1"
                     />
                   </button>
