@@ -167,6 +167,7 @@ function CatalogContent() {
     </div>;
   }
 
+  
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom,rgb(255, 255, 255),rgb(255, 255, 255))'}}>
       {/* Header Section */}
