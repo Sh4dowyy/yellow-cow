@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/product-card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { supabase } from "@/utils/supabase/supabaseClient"; // Adjust the import path as necessary
 import { useRouter } from "next/navigation";
 
@@ -41,7 +40,8 @@ function CatalogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedBrand, setSelectedBrand] = useState<string>("all");
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search');
@@ -49,6 +49,26 @@ function CatalogContent() {
   const brandFilter = searchParams.get('brand');
 
   const router = useRouter();
+
+  // Подсчет товаров по брендам
+  const getBrandCounts = () => {
+    const counts: { [key: string]: number } = {};
+    const toysToCount = activeTab === "all" ? toys : toys.filter(toy => toy.category_id === activeTab);
+    
+    toysToCount.forEach(toy => {
+      if (toy.brand_id) {
+        counts[toy.brand_id] = (counts[toy.brand_id] || 0) + 1;
+      }
+    });
+    
+    return brands
+      .map(brand => ({
+        ...brand,
+        count: counts[brand.id] || 0
+      }))
+      .filter(brand => brand.count > 0) // Показываем только бренды с товарами
+      .sort((a, b) => b.count - a.count); // Сортируем по количеству товаров
+  };
 
   // Восстановление позиции скролла при возврате
   useEffect(() => {
@@ -136,10 +156,12 @@ function CatalogContent() {
     fetchToysAndCategories();
   }, []);
 
-  // Set selected brand from URL parameter for all categories
+  // Set selected brands from URL parameter
   useEffect(() => {
     if (brandFilter && brands.length > 0) {
-      setSelectedBrand(brandFilter);
+      setSelectedBrands(brandFilter.split(',').filter(id => brands.some(brand => brand.id === id)));
+    } else {
+      setSelectedBrands([]);
     }
   }, [brandFilter, brands]);
 
@@ -181,50 +203,83 @@ function CatalogContent() {
     }
 
     // Фильтрация по бренду (для всех категорий)
-    if (selectedBrand !== "all") {
-      filtered = filtered.filter(toy => toy.brand_id === selectedBrand);
+    if (selectedBrands.length > 0) {
+      filtered = filtered.filter(toy => selectedBrands.includes(toy.brand_id || ''));
     }
 
     setFilteredToys(filtered);
-  }, [toys, searchQuery, categoryFilter, selectedBrand, brands, activeTab]);
+  }, [toys, searchQuery, categoryFilter, selectedBrands, brands, activeTab]);
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    // Сохраняем выбранный бренд при смене категории
+    // Сохраняем текущую позицию скролла
+    const currentScrollY = window.scrollY;
     
-    // Обновляем URL для синхронизации только если нужно
-    if (value === "all") {
-      if (categoryFilter) {
-        router.push('/catalog');
-      }
-    } else {
-      if (categoryFilter !== value) {
-        router.push(`/catalog?category=${value}`);
-      }
+    setActiveTab(value);
+    // НЕ сбрасываем бренды - они должны работать вместе с категориями
+    
+    // Обновляем URL для синхронизации
+    const params = new URLSearchParams();
+    if (value !== "all") {
+      params.set('category', value);
     }
+    if (selectedBrands.length > 0) {
+      params.set('brand', selectedBrands.join(','));
+    }
+    
+    const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
+    
+    // Используем replace чтобы избежать добавления в историю и сохраняем скролл
+    window.history.replaceState(null, '', url);
+    
+    // Восстанавливаем позицию скролла после короткой задержки
+    setTimeout(() => {
+      window.scrollTo(0, currentScrollY);
+    }, 0);
   };
 
   const handleBrandChange = (brandId: string) => {
-    setSelectedBrand(brandId);
+    // Сохраняем текущую позицию скролла
+    const currentScrollY = window.scrollY;
     
-    // Обновляем URL с учетом текущей категории и выбранного бренда
-    if (brandId !== "all") {
-      // Если выбран бренд, добавляем его в URL вместе с текущей категорией
-      const params = new URLSearchParams();
-      if (activeTab !== "all") {
-        params.set('category', activeTab);
-      }
-      params.set('brand', brandId);
-      router.push(`/catalog?${params.toString()}`);
-    } else {
-      // Если сбрасываем бренд, оставляем только категорию в URL
-      if (activeTab !== "all") {
-        router.push(`/catalog?category=${activeTab}`);
-      } else {
-        router.push('/catalog');
-      }
+    const newSelected = selectedBrands.includes(brandId) 
+      ? selectedBrands.filter(id => id !== brandId) 
+      : [...selectedBrands, brandId];
+    
+    setSelectedBrands(newSelected);
+    
+    // Обновляем URL с учетом текущей категории и выбранных брендов
+    const params = new URLSearchParams();
+    if (activeTab !== "all") {
+      params.set('category', activeTab);
     }
+    if (newSelected.length > 0) {
+      params.set('brand', newSelected.join(','));
+    }
+    
+    const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
+    
+    // Используем replace чтобы избежать добавления в историю и сохраняем скролл
+    window.history.replaceState(null, '', url);
+    
+    // Восстанавливаем позицию скролла после короткой задержки
+    setTimeout(() => {
+      window.scrollTo(0, currentScrollY);
+    }, 0);
   };
+
+  // Блокировка скролла при открытой боковой панели
+  useEffect(() => {
+    if (isMobileFiltersOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup при размонтировании компонента
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileFiltersOpen]);
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -241,6 +296,100 @@ function CatalogContent() {
 
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom,rgb(255, 255, 255),rgb(255, 255, 255))'}}>
+      {/* Mobile Filter Sidebar */}
+      <div className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileFiltersOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {/* Overlay */}
+        <div 
+          className="absolute inset-0 bg-black bg-opacity-50"
+          onClick={() => setIsMobileFiltersOpen(false)}
+        />
+        
+        {/* Sidebar */}
+        <div className={`absolute right-0 top-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl transform transition-transform duration-300 ${isMobileFiltersOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h2 className="text-xl font-montserrat font-bold text-blue-700">
+                Фильтры
+              </h2>
+              <button
+                onClick={() => setIsMobileFiltersOpen(false)}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Brand Filters */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
+                Фильтр по бренду
+              </h3>
+              
+              <div className="space-y-2">
+                {getBrandCounts().map((brand) => (
+                  <label
+                    key={brand.id}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                  >
+                    <div className="flex items-center space-x-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedBrands.includes(brand.id)}
+                        onChange={() => {
+                          handleBrandChange(brand.id);
+                          // Закрываем панель на мобильной версии с небольшой задержкой для визуального feedback
+                          setTimeout(() => {
+                            setIsMobileFiltersOpen(false);
+                          }, 150);
+                        }}
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="text-sm font-montserrat text-gray-800 group-hover:text-blue-700 font-medium">
+                        {brand.name}
+                      </span>
+                    </div>
+                    <span className="text-sm font-montserrat font-bold text-gray-600 bg-gray-200 group-hover:bg-blue-100 px-2 py-1 rounded-full min-w-[28px] text-center">
+                      {brand.count}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            {/* Footer with Clear Button */}
+            {selectedBrands.length > 0 && (
+              <div className="p-4 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    // Сохраняем текущую позицию скролла
+                    const currentScrollY = window.scrollY;
+                    
+                    setSelectedBrands([]);
+                    const params = new URLSearchParams();
+                    if (activeTab !== "all") {
+                      params.set('category', activeTab);
+                    }
+                    const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
+                    
+                    // Используем replace и сохраняем скролл
+                    window.history.replaceState(null, '', url);
+                    setTimeout(() => {
+                      window.scrollTo(0, currentScrollY);
+                    }, 0);
+                  }}
+                  className="w-full text-sm text-red-600 hover:text-red-800 font-montserrat underline hover:bg-red-50 py-2 rounded-lg transition-colors"
+                >
+                  Очистить фильтры ({selectedBrands.length})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-12 relative overflow-hidden">
         {/* Background decoration */}
@@ -274,103 +423,165 @@ function CatalogContent() {
       </div>
 
       <div className="container mx-auto px-2 sm:px-4 py-12">
-
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-12">
-        <div className="p-3 sm:p-4 mx-2 sm:mx-4">
-          <div className="text-center mb-4">
-            <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-4">Выберите категорию</h2>
-          </div>
-          <div className="flex justify-center mb-4 px-1">
-            <TabsList className="inline-flex flex-wrap gap-2 sm:gap-3 justify-center bg-transparent border-0 p-1 max-w-full">
-              <TabsTrigger
-                value="all"
-                className="border-2 border-blue-300 rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 font-bold text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600"
-              >
-                Все игрушки
-              </TabsTrigger>
-              {categories.map((category) => (
-                <TabsTrigger
-                  key={category.id}
-                  value={category.id}
-                  className="border-2 border-blue-300 rounded-lg px-4 sm:px-5 py-2.5 sm:py-3 font-bold text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md text-blue-700 hover:bg-blue-100 hover:border-blue-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600"
-                >
-                  {category.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-        </div>
-
-        {/* Brand Filter - Separate Section */}
-        <div className="mb-8 mt-20">
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-blue-200 p-6 mx-2 sm:mx-4 shadow-lg">
-            <div className="flex flex-col gap-4 items-center">
-              <h3 className="text-lg font-montserrat font-bold text-blue-800 text-center">
-                Фильтр по бренду:
+        <div className="flex gap-8">
+          {/* Sidebar with Brand Filters */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
+            <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 shadow-sm sticky top-4">
+              <h3 className="text-xl font-montserrat font-bold text-blue-700 mb-4 text-center">
+                Фильтр по бренду
               </h3>
-              <Select value={selectedBrand} onValueChange={handleBrandChange}>
-                <SelectTrigger className="w-full sm:w-[280px] h-12 bg-white border-blue-300 hover:border-blue-500 transition-colors font-montserrat">
-                  <SelectValue placeholder="Все бренды" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="font-montserrat">Все бренды</SelectItem>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id} className="font-montserrat">
-                      {brand.name}
-                    </SelectItem>
+              
+              <div className="max-h-96 overflow-y-auto">
+                <div className="space-y-2">
+                  {getBrandCounts().map((brand) => (
+                    <label
+                      key={brand.id}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedBrands.includes(brand.id)}
+                          onChange={() => handleBrandChange(brand.id)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-sm font-montserrat text-gray-800 group-hover:text-blue-700 font-medium">
+                          {brand.name}
+                        </span>
+                      </div>
+                      <span className="text-sm font-montserrat font-bold text-gray-600 bg-gray-200 group-hover:bg-blue-100 px-2 py-1 rounded-full min-w-[28px] text-center">
+                        {brand.count}
+                      </span>
+                    </label>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              </div>
+              
+              {selectedBrands.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-300">
+                  <button
+                    onClick={() => {
+                      // Сохраняем текущую позицию скролла
+                      const currentScrollY = window.scrollY;
+                      
+                      setSelectedBrands([]);
+                      const params = new URLSearchParams();
+                      if (activeTab !== "all") {
+                        params.set('category', activeTab);
+                      }
+                      const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
+                      
+                      // Используем replace и сохраняем скролл
+                      window.history.replaceState(null, '', url);
+                      setTimeout(() => {
+                        window.scrollTo(0, currentScrollY);
+                      }, 0);
+                    }}
+                    className="w-full text-sm text-red-600 hover:text-red-800 font-montserrat underline hover:bg-red-50 py-2 rounded-lg transition-colors"
+                  >
+                    Очистить фильтры ({selectedBrands.length})
+                  </button>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-12">
+              <div className="hidden lg:block bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 sm:p-6 lg:p-8 shadow-sm">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-montserrat font-black text-blue-700 mb-4">Выберите категорию</h2>
+                </div>
+                <div className="flex justify-center mb-6 px-4">
+                  <TabsList className="inline-flex flex-wrap gap-3 sm:gap-2 justify-center bg-transparent border-0 p-0">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
+                    >
+                      Все игрушки
+                    </TabsTrigger>
+                    {categories.map((category) => (
+                      <TabsTrigger
+                        key={category.id}
+                        value={category.id}
+                        className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-500 data-[state=active]:text-white data-[state=active]:border-blue-600 data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100 data-[state=inactive]:border-blue-300 data-[state=inactive]:hover:border-blue-500 border-2 rounded-xl px-4 sm:px-4 py-1 sm:py-1 font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap shadow-sm hover:shadow-md"
+                      >
+                        {category.name}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+              </div>
+            
+            {/* Mobile Filter Button - Outside Categories Container */}
+            <div className="lg:hidden mt-3 w-full">
+              <div className="flex justify-center items-center w-full">
+                <button
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-montserrat font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                  </svg>
+                  Фильтры
+                  {selectedBrands.length > 0 && (
+                    <span className="bg-white text-blue-600 px-2 py-1 rounded-full text-sm font-bold">
+                      {selectedBrands.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+              {/* Content for "Все игрушки" */}
+              <TabsContent value="all" className="mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+                  {(searchQuery || categoryFilter || selectedBrands.length > 0 ? filteredToys : toys).map((toy) => (
+                    <ProductCard 
+                      key={toy.id} 
+                      product={toy} 
+                      width="max-w-[180px] sm:max-w-[240px]"
+                      brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
+                    />
+                  ))}
+                </div>
+                {(searchQuery || categoryFilter || selectedBrands.length > 0 ? filteredToys : toys).length === 0 && (
+                  <div className="text-center py-16">
+                    <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">
+                      {searchQuery ? "Ничего не найдено" : "Товары скоро появятся"}
+                    </h3>
+                    <p className="text-blue-600 font-montserrat text-lg">
+                      {searchQuery ? "Попробуйте изменить поисковый запрос" : "Мы работаем над пополнением ассортимента"}
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Content for each category */}
+              {categories.map((category) => (
+                <TabsContent key={category.id} value={category.id} className="mt-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+                    {filteredToys.map((toy) => (
+                      <ProductCard 
+                        key={toy.id} 
+                        product={toy} 
+                        width="max-w-[180px] sm:max-w-[240px]"
+                        brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
+                      />
+                    ))}
+                  </div>
+                  {filteredToys.length === 0 && (
+                    <div className="text-center py-16">
+                      <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">В этой категории пока пусто</h3>
+                      <p className="text-blue-600 font-montserrat text-lg">Скоро здесь появятся замечательные игрушки!</p>
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
           </div>
         </div>
-
-        {/* Content for "Все игрушки" */}
-        <TabsContent value="all" className="mt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
-            {(searchQuery || categoryFilter || selectedBrand !== "all" ? filteredToys : toys).map((toy) => (
-              <ProductCard 
-                key={toy.id} 
-                product={toy} 
-                width="max-w-[180px] sm:max-w-[240px]"
-                brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
-              />
-            ))}
-          </div>
-          {(searchQuery || categoryFilter || selectedBrand !== "all" ? filteredToys : toys).length === 0 && (
-            <div className="text-center py-16">
-              <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">
-                {searchQuery ? "Ничего не найдено" : "Товары скоро появятся"}
-              </h3>
-              <p className="text-blue-600 font-montserrat text-lg">
-                {searchQuery ? "Попробуйте изменить поисковый запрос" : "Мы работаем над пополнением ассортимента"}
-              </p>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Content for each category */}
-        {categories.map((category) => (
-          <TabsContent key={category.id} value={category.id} className="mt-6">
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
-              {filteredToys.map((toy) => (
-                              <ProductCard 
-                key={toy.id} 
-                product={toy} 
-                width="max-w-[180px] sm:max-w-[240px]"
-                brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
-              />
-              ))}
-            </div>
-            {filteredToys.length === 0 && (
-              <div className="text-center py-16">
-                <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">В этой категории пока пусто</h3>
-                <p className="text-blue-600 font-montserrat text-lg">Скоро здесь появятся замечательные игрушки!</p>
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
       </div>
     </div>
   )
