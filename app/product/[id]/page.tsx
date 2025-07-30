@@ -375,6 +375,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   product={recommendedProduct}
                   width="max-w-[260px]"
                   brandName={brands.find(brand => brand.id === recommendedProduct.brand_id)?.name}
+                  hideGender={true}
                 />
               ))}
             </div>

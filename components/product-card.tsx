@@ -26,9 +26,10 @@ interface ProductCardProps {
   product: Product
   width?: string
   brandName?: string
+  hideGender?: boolean
 }
 
-export default function ProductCard({ product, width = "max-w-[280px]", brandName }: ProductCardProps) {
+export default function ProductCard({ product, width = "max-w-[280px]", brandName, hideGender = false }: ProductCardProps) {
 
   return (
     <Link href={`/product/${product.id}`} className="block group">
@@ -82,7 +83,7 @@ export default function ProductCard({ product, width = "max-w-[280px]", brandNam
               </p>
               
               {/* Gender badge */}
-              {product.gender && (
+              {product.gender && !hideGender && (
                 <p className="text-xs sm:text-sm text-left border border-gray-300 px-1 sm:px-2 py-1"
                   style={{
                     backgroundColor: '#F0FDF4',

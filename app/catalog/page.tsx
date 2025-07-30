@@ -536,12 +536,12 @@ function CatalogContent() {
 
               {/* Content for "Все игрушки" */}
               <TabsContent value="all" className="mt-6">
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-6">
                   {(searchQuery || categoryFilter || selectedBrands.length > 0 ? filteredToys : toys).map((toy) => (
                     <ProductCard 
                       key={toy.id} 
                       product={toy} 
-                      width="max-w-[180px] sm:max-w-[240px]"
+                      width="max-w-[200px] sm:max-w-[280px]"
                       brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
                     />
                   ))}
@@ -561,12 +561,12 @@ function CatalogContent() {
               {/* Content for each category */}
               {categories.map((category) => (
                 <TabsContent key={category.id} value={category.id} className="mt-6">
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-6">
                     {filteredToys.map((toy) => (
                       <ProductCard 
                         key={toy.id} 
                         product={toy} 
-                        width="max-w-[180px] sm:max-w-[240px]"
+                        width="max-w-[200px] sm:max-w-[280px]"
                         brandName={brands.find(brand => brand.id === toy.brand_id)?.name}
                       />
                     ))}
