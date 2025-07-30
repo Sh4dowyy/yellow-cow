@@ -370,7 +370,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                     src={product.image_url || "/placeholder.svg"} 
                     alt={product.name} 
                     fill 
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    unoptimized
                     className="object-contain p-4" 
                   />
                   {product.is_featured && (
@@ -587,7 +587,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                             src={url}
                             alt={`Additional image ${index + 1}`}
                             fill
-                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                            unoptimized
                             className="object-contain p-2"
                           />
                           
