@@ -553,6 +553,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                       src={editFormData.image_url}
                       alt="Current main image"
                       fill
+                      sizes="80px"
                       className="object-contain p-1 rounded"
                     />
                   </div>
