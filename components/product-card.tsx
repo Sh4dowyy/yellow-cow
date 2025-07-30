@@ -38,6 +38,7 @@ export default function ProductCard({ product, width = "max-w-[280px]", brandNam
             src={product.image_url || "/placeholder.svg"} 
             alt={product.name} 
             fill 
+            unoptimized
             className="object-cover group-hover:scale-105 transition-transform duration-300" 
           />
           

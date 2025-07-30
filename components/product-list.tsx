@@ -370,6 +370,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                     src={product.image_url || "/placeholder.svg"} 
                     alt={product.name} 
                     fill 
+                    unoptimized
                     className="object-contain p-4" 
                   />
                   {product.is_featured && (
@@ -585,6 +586,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                             src={url}
                             alt={`Additional image ${index + 1}`}
                             fill
+                            unoptimized
                             className="object-contain p-2"
                           />
                           
