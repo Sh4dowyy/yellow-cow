@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     siteName: 'Aria Toys',
     images: [
       {
-        url: '/logos/aria-toys-logo.png',
+        url: '/icon.svg',
         width: 1200,
         height: 630,
         alt: 'Aria Toys Logo',
@@ -48,31 +48,17 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Aria Toys - Детские игрушки',
     description: 'Интернет-магазин качественных детских игрушек',
-    images: ['/logos/aria-toys-logo.png'],
+    images: ['/icon.svg'],
   },
   icons: {
     icon: [
       {
-        url: '/logos/aria-toys-logo.png',
-        sizes: '32x32',
-        type: 'image/png',
-      },
-      {
-        url: '/logos/aria-toys-logo.png', 
-        sizes: '16x16',
-        type: 'image/png',
-      },
-      {
-        url: '/logos/aria-toys-logo.png',
-        sizes: '192x192',
-        type: 'image/png',
+        url: '/icon.svg',
+        type: 'image/svg+xml',
       }
     ],
-    shortcut: '/logos/aria-toys-logo.png',
-    apple: {
-      url: '/logos/aria-toys-logo.png',
-      sizes: '180x180',
-    },
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
 }
 
