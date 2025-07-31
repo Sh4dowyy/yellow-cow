@@ -410,20 +410,20 @@ function CatalogContent() {
             </div>
             
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Brand Filters */}
               <div>
-                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
+                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-2">
                   Фильтр по бренду
                 </h3>
                 
-                <div className="space-y-2">
+                <div className="space-y-0.5">
                   {getBrandCounts().map((brand) => (
                     <label
                       key={brand.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                      className="flex items-center justify-between p-1.5 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
                     >
-                      <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center space-x-2 flex-1">
                         <input
                           type="checkbox"
                           checked={tempSelectedBrands.includes(brand.id)}
@@ -449,17 +449,17 @@ function CatalogContent() {
 
               {/* Category Filters */}
               <div>
-                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
+                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-2">
                   Фильтр по категориям
                 </h3>
                 
-                <div className="space-y-2">
+                <div className="space-y-0.5">
                   {getCategoryCounts().map((category) => (
                     <label
                       key={category.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                      className="flex items-center justify-between p-1.5 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
                     >
-                      <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center space-x-2 flex-1">
                         <input
                           type="checkbox"
                           checked={tempSelectedCategories.includes(category.id)}
@@ -485,7 +485,7 @@ function CatalogContent() {
             </div>
             
             {/* Footer with Action Buttons */}
-            <div className="p-4 border-t border-gray-200 space-y-3">
+            <div className="p-4 border-t border-gray-200 space-y-2">
               {/* Apply Filters Button */}
               <button
                 onClick={applyMobileFilters}
@@ -559,9 +559,9 @@ function CatalogContent() {
                   {getBrandCounts().map((brand) => (
                     <label
                       key={brand.id}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                      className="flex items-center justify-between p-1.5 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
                     >
-                      <div className="flex items-center space-x-3 flex-1">
+                      <div className="flex items-center space-x-2 flex-1">
                         <input
                           type="checkbox"
                           checked={selectedBrands.includes(brand.id)}
