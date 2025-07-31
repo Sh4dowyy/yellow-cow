@@ -545,7 +545,7 @@ function CatalogContent() {
         </div>
       </div>
 
-      <div className="container mx-auto px-2 sm:px-4 py-12">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-12">
         <div className="flex gap-8">
           {/* Sidebar with Brand Filters */}
           <div className="hidden lg:block w-80 flex-shrink-0">
@@ -638,7 +638,7 @@ function CatalogContent() {
               </div>
             
             {/* Mobile Filter Button - Outside Categories Container */}
-            <div className="lg:hidden mt-3 w-full">
+            <div className="lg:hidden w-full mb-4">
               <div className="flex justify-center items-center w-full">
                 <button
                   onClick={() => setIsMobileFiltersOpen(true)}
