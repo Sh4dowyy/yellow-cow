@@ -27,6 +27,7 @@ interface Product {
   brand_id?: string; // Бренд
   gender?: string; // Пол
   is_new?: boolean; // Новинка
+  height?: string; // Высота
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,6 +63,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           brand_id,
           gender,
           is_new,
+          height,
           categories (
             name
           )
@@ -98,6 +100,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             brand_id,
             gender,
             is_new,
+            height,
             categories (
               name
             )
@@ -261,6 +264,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   {product.gender === 'boys' ? 'Для мальчиков' : 
                    product.gender === 'girls' ? 'Для девочек' : 
                    'Для всех'}
+                </Badge>
+              )}
+              {product.height && (
+                <Badge variant="outline" className="border-blue-200 text-blue-700 text-base px-4 py-2">
+                  Высота: {product.height}
                 </Badge>
               )}
               {product.is_new && (

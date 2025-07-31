@@ -19,6 +19,7 @@ interface Toy {
   age_range?: string;
   brand_id?: string;
   is_new?: boolean;
+  height?: string;
 }
 
 interface Category {
@@ -41,6 +42,9 @@ function CatalogContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [tempSelectedBrands, setTempSelectedBrands] = useState<string[]>([]);
+  const [tempSelectedCategories, setTempSelectedCategories] = useState<string[]>([]);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
   const searchParams = useSearchParams();
@@ -53,7 +57,14 @@ function CatalogContent() {
   // Подсчет товаров по брендам
   const getBrandCounts = () => {
     const counts: { [key: string]: number } = {};
-    const toysToCount = activeTab === "all" ? toys : toys.filter(toy => toy.category_id === activeTab);
+    let toysToCount = toys;
+    
+    // Фильтруем по выбранным категориям
+    if (selectedCategories.length > 0) {
+      toysToCount = toysToCount.filter(toy => selectedCategories.includes(toy.category_id));
+    } else if (activeTab !== "all") {
+      toysToCount = toysToCount.filter(toy => toy.category_id === activeTab);
+    }
     
     toysToCount.forEach(toy => {
       if (toy.brand_id) {
@@ -67,6 +78,29 @@ function CatalogContent() {
         count: counts[brand.id] || 0
       }))
       .filter(brand => brand.count > 0) // Показываем только бренды с товарами
+      .sort((a, b) => b.count - a.count); // Сортируем по количеству товаров
+  };
+
+  // Подсчет товаров по категориям
+  const getCategoryCounts = () => {
+    const counts: { [key: string]: number } = {};
+    let toysToCount = toys;
+    
+    // Фильтруем по выбранным брендам
+    if (selectedBrands.length > 0) {
+      toysToCount = toysToCount.filter(toy => selectedBrands.includes(toy.brand_id || ''));
+    }
+    
+    toysToCount.forEach(toy => {
+      counts[toy.category_id] = (counts[toy.category_id] || 0) + 1;
+    });
+    
+    return categories
+      .map(category => ({
+        ...category,
+        count: counts[category.id] || 0
+      }))
+      .filter(category => category.count > 0) // Показываем только категории с товарами
       .sort((a, b) => b.count - a.count); // Сортируем по количеству товаров
   };
 
@@ -113,7 +147,7 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, brand_id, is_new');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, brand_id, is_new, height');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
@@ -156,14 +190,28 @@ function CatalogContent() {
     fetchToysAndCategories();
   }, []);
 
-  // Set selected brands from URL parameter
+  // Set selected brands and categories from URL parameters
   useEffect(() => {
     if (brandFilter && brands.length > 0) {
-      setSelectedBrands(brandFilter.split(',').filter(id => brands.some(brand => brand.id === id)));
+      const brandIds = brandFilter.split(',').filter(id => brands.some(brand => brand.id === id));
+      setSelectedBrands(brandIds);
+      setTempSelectedBrands(brandIds);
     } else {
       setSelectedBrands([]);
+      setTempSelectedBrands([]);
     }
   }, [brandFilter, brands]);
+
+  useEffect(() => {
+    if (categoryFilter && categories.length > 0) {
+      const categoryIds = categoryFilter.split(',').filter(id => categories.some(category => category.id === id));
+      setSelectedCategories(categoryIds);
+      setTempSelectedCategories(categoryIds);
+    } else {
+      setSelectedCategories([]);
+      setTempSelectedCategories([]);
+    }
+  }, [categoryFilter, categories]);
 
   useEffect(() => {
     if (!toys.length) return;
@@ -182,24 +230,29 @@ function CatalogContent() {
       });
     }
 
-    // Установка активной вкладки из URL - исправленная логика
-    if (categoryFilter && categoryFilter !== "all") {
-      // Если в URL есть категория, и она отличается от текущей активной вкладки
-      if (activeTab !== categoryFilter) {
-        setActiveTab(categoryFilter);
-        return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
+    // Фильтрация по категориям (если выбраны множественные категории)
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(toy => selectedCategories.includes(toy.category_id));
+    } else {
+      // Установка активной вкладки из URL - исправленная логика
+      if (categoryFilter && categoryFilter !== "all") {
+        // Если в URL есть категория, и она отличается от текущей активной вкладки
+        if (activeTab !== categoryFilter) {
+          setActiveTab(categoryFilter);
+          return; // Выходим, чтобы позволить useEffect сработать снова с новым activeTab
+        }
+      } else if (!categoryFilter) {
+        // Если в URL нет категории, но активная вкладка не "all"
+        if (activeTab !== "all") {
+          setActiveTab("all");
+          return;
+        }
       }
-    } else if (!categoryFilter) {
-      // Если в URL нет категории, но активная вкладка не "all"
+      
+      // Фильтрация по выбранной вкладке (только если не выбраны множественные категории)
       if (activeTab !== "all") {
-        setActiveTab("all");
-        return;
+        filtered = filtered.filter(toy => toy.category_id === activeTab);
       }
-    }
-    
-    // Фильтрация по выбранной вкладке
-    if (activeTab !== "all") {
-      filtered = filtered.filter(toy => toy.category_id === activeTab);
     }
 
     // Фильтрация по бренду (для всех категорий)
@@ -208,7 +261,7 @@ function CatalogContent() {
     }
 
     setFilteredToys(filtered);
-  }, [toys, searchQuery, categoryFilter, selectedBrands, brands, activeTab]);
+  }, [toys, searchQuery, categoryFilter, selectedBrands, selectedCategories, brands, activeTab]);
 
   const handleTabChange = (value: string) => {
     // Сохраняем текущую позицию скролла
@@ -267,6 +320,40 @@ function CatalogContent() {
     }, 0);
   };
 
+  // Функция для применения фильтров
+  const applyMobileFilters = () => {
+    setSelectedBrands(tempSelectedBrands);
+    setSelectedCategories(tempSelectedCategories);
+    
+    // Обновляем URL
+    const params = new URLSearchParams();
+    if (tempSelectedCategories.length > 0) {
+      params.set('category', tempSelectedCategories.join(','));
+    }
+    if (tempSelectedBrands.length > 0) {
+      params.set('brand', tempSelectedBrands.join(','));
+    }
+    
+    const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
+    window.history.replaceState(null, '', url);
+    
+    setIsMobileFiltersOpen(false);
+  };
+
+  // Функция для очистки временных фильтров
+  const clearMobileFilters = () => {
+    setTempSelectedBrands([]);
+    setTempSelectedCategories([]);
+  };
+
+  // Инициализация временных фильтров при открытии панели
+  useEffect(() => {
+    if (isMobileFiltersOpen) {
+      setTempSelectedBrands(selectedBrands);
+      setTempSelectedCategories(selectedCategories);
+    }
+  }, [isMobileFiltersOpen, selectedBrands, selectedCategories]);
+
   // Блокировка скролла при открытой боковой панели
   useEffect(() => {
     if (isMobileFiltersOpen) {
@@ -322,70 +409,106 @@ function CatalogContent() {
               </button>
             </div>
             
-            {/* Brand Filters */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
-                Фильтр по бренду
-              </h3>
-              
-              <div className="space-y-2">
-                {getBrandCounts().map((brand) => (
-                  <label
-                    key={brand.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
-                  >
-                    <div className="flex items-center space-x-3 flex-1">
-                      <input
-                        type="checkbox"
-                        checked={selectedBrands.includes(brand.id)}
-                        onChange={() => {
-                          handleBrandChange(brand.id);
-                          // Закрываем панель на мобильной версии с небольшой задержкой для визуального feedback
-                          setTimeout(() => {
-                            setIsMobileFiltersOpen(false);
-                          }, 150);
-                        }}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                      />
-                      <span className="text-sm font-montserrat text-gray-800 group-hover:text-blue-700 font-medium">
-                        {brand.name}
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Brand Filters */}
+              <div>
+                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
+                  Фильтр по бренду
+                </h3>
+                
+                <div className="space-y-2">
+                  {getBrandCounts().map((brand) => (
+                    <label
+                      key={brand.id}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedBrands.includes(brand.id)}
+                          onChange={() => {
+                            const newSelected = tempSelectedBrands.includes(brand.id) 
+                              ? tempSelectedBrands.filter(id => id !== brand.id) 
+                              : [...tempSelectedBrands, brand.id];
+                            setTempSelectedBrands(newSelected);
+                          }}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-sm font-montserrat text-gray-800 group-hover:text-blue-700 font-medium">
+                          {brand.name}
+                        </span>
+                      </div>
+                      <span className="text-sm font-montserrat font-bold text-gray-600 bg-gray-200 group-hover:bg-blue-100 px-2 py-1 rounded-full min-w-[28px] text-center">
+                        {brand.count}
                       </span>
-                    </div>
-                    <span className="text-sm font-montserrat font-bold text-gray-600 bg-gray-200 group-hover:bg-blue-100 px-2 py-1 rounded-full min-w-[28px] text-center">
-                      {brand.count}
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category Filters */}
+              <div>
+                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-4">
+                  Фильтр по категориям
+                </h3>
+                
+                <div className="space-y-2">
+                  {getCategoryCounts().map((category) => (
+                    <label
+                      key={category.id}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer group border border-transparent hover:border-blue-200"
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={tempSelectedCategories.includes(category.id)}
+                          onChange={() => {
+                            const newSelected = tempSelectedCategories.includes(category.id) 
+                              ? tempSelectedCategories.filter(id => id !== category.id) 
+                              : [...tempSelectedCategories, category.id];
+                            setTempSelectedCategories(newSelected);
+                          }}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-sm font-montserrat text-gray-800 group-hover:text-blue-700 font-medium">
+                          {category.name}
+                        </span>
+                      </div>
+                      <span className="text-sm font-montserrat font-bold text-gray-600 bg-gray-200 group-hover:bg-blue-100 px-2 py-1 rounded-full min-w-[28px] text-center">
+                        {category.count}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
             
-            {/* Footer with Clear Button */}
-            {selectedBrands.length > 0 && (
-              <div className="p-4 border-t border-gray-200">
+            {/* Footer with Action Buttons */}
+            <div className="p-4 border-t border-gray-200 space-y-3">
+              {/* Apply Filters Button */}
+              <button
+                onClick={applyMobileFilters}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-montserrat font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                Применить фильтры
+                {(tempSelectedBrands.length > 0 || tempSelectedCategories.length > 0) && (
+                  <span className="ml-2 bg-white text-blue-600 px-2 py-1 rounded-full text-sm">
+                    {tempSelectedBrands.length + tempSelectedCategories.length}
+                  </span>
+                )}
+              </button>
+              
+              {/* Clear Filters Button */}
+              {(tempSelectedBrands.length > 0 || tempSelectedCategories.length > 0) && (
                 <button
-                  onClick={() => {
-                    // Сохраняем текущую позицию скролла
-                    const currentScrollY = window.scrollY;
-                    
-                    setSelectedBrands([]);
-                    const params = new URLSearchParams();
-                    if (activeTab !== "all") {
-                      params.set('category', activeTab);
-                    }
-                    const url = params.toString() ? `/catalog?${params.toString()}` : '/catalog';
-                    
-                    // Используем replace и сохраняем скролл
-                    window.history.replaceState(null, '', url);
-                    setTimeout(() => {
-                      window.scrollTo(0, currentScrollY);
-                    }, 0);
-                  }}
+                  onClick={clearMobileFilters}
                   className="w-full text-sm text-red-600 hover:text-red-800 font-montserrat underline hover:bg-red-50 py-2 rounded-lg transition-colors"
                 >
-                  Очистить фильтры ({selectedBrands.length})
+                  Очистить все фильтры
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -525,9 +648,9 @@ function CatalogContent() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
                   </svg>
                   Фильтры
-                  {selectedBrands.length > 0 && (
+                  {(selectedBrands.length > 0 || selectedCategories.length > 0) && (
                     <span className="bg-white text-blue-600 px-2 py-1 rounded-full text-sm font-bold">
-                      {selectedBrands.length}
+                      {selectedBrands.length + selectedCategories.length}
                     </span>
                   )}
                 </button>
@@ -537,7 +660,7 @@ function CatalogContent() {
               {/* Content for "Все игрушки" */}
               <TabsContent value="all" className="mt-6">
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-6">
-                  {(searchQuery || categoryFilter || selectedBrands.length > 0 ? filteredToys : toys).map((toy) => (
+                  {(searchQuery || categoryFilter || selectedBrands.length > 0 || selectedCategories.length > 0 ? filteredToys : toys).map((toy) => (
                     <ProductCard 
                       key={toy.id} 
                       product={toy} 
@@ -546,7 +669,7 @@ function CatalogContent() {
                     />
                   ))}
                 </div>
-                {(searchQuery || categoryFilter || selectedBrands.length > 0 ? filteredToys : toys).length === 0 && (
+                {(searchQuery || categoryFilter || selectedBrands.length > 0 || selectedCategories.length > 0 ? filteredToys : toys).length === 0 && (
                   <div className="text-center py-16">
                     <h3 className="text-2xl font-montserrat font-bold text-blue-700 mb-3">
                       {searchQuery ? "Ничего не найдено" : "Товары скоро появятся"}

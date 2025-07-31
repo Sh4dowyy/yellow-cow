@@ -26,6 +26,7 @@ interface Product {
   brand_id?: string
   gender?: string
   is_new?: boolean
+  height?: string
 }
 
 interface Category {
@@ -65,6 +66,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     brand_id: '',
     gender: '',
     is_new: false,
+    height: '',
   })
   const [editImageFile, setEditImageFile] = useState<File | null>(null)
   const [editAdditionalImageFiles, setEditAdditionalImageFiles] = useState<File[]>([])
@@ -166,6 +168,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       brand_id: product.brand_id || '',
       gender: product.gender || '',
       is_new: product.is_new || false,
+      height: product.height || '',
     })
     setEditImageFile(null)
     setEditAdditionalImageFiles([])
@@ -777,6 +780,20 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
                 <option value="boys">Мальчики</option>
                 <option value="girls">Девочки</option>
               </select>
+            </div>
+            
+            <div>
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-height">
+                Высота игрушки
+              </label>
+              <Input
+                id="edit-height"
+                name="height"
+                value={editFormData.height}
+                onChange={handleEditFormChange}
+                placeholder="Например: 12см"
+                className="text-lg h-12"
+              />
             </div>
             
             <div className="flex justify-end gap-4 pt-8">

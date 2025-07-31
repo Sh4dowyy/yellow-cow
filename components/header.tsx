@@ -181,7 +181,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
           <button
             onClick={onCategoryMenuToggle}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-            aria-label="Открыть меню категорий"
+            aria-label="Открыть меню"
           >
             <Menu size={24} className="text-gray-700" />
           </button>

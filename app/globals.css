@@ -113,3 +113,8 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Анимация с задержкой для эмодзи в подсказках прокрутки */
+.animation-delay-300 {
+  animation-delay: 0.3s;
+}

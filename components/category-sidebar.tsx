@@ -1,15 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef, Suspense } from "react"
-import { X, ChevronRight } from "lucide-react"
+import { useEffect, useRef, Suspense } from "react"
+import { X, ChevronRight, Package, Star, Award } from "lucide-react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { supabase } from "@/utils/supabase/supabaseClient"
-
-interface Category {
-  id: string
-  name: string
-}
+import { useRouter, usePathname } from "next/navigation"
 
 interface CategorySidebarProps {
   isOpen: boolean
@@ -17,40 +11,9 @@ interface CategorySidebarProps {
 }
 
 function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  
-  // Get current category from URL
-  const currentCategory = searchParams.get('category')
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('categories')
-          .select('id, name')
-          .order('name')
-
-        if (error) {
-          console.error("Error fetching categories:", error)
-          setError("Не удалось загрузить категории")
-        } else {
-          setCategories(data || [])
-        }
-      } catch (err) {
-        console.error("Unexpected error:", err)
-        setError("Произошла ошибка")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCategories()
-  }, [])
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,18 +35,52 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
     }
   }, [isOpen, onClose])
 
-  const handleCategoryClick = (categoryId: string) => {
-    router.push(`/catalog?category=${categoryId}`)
-    onClose()
-  }
-
-  const handleAllProductsClick = () => {
+  const handleCatalogClick = () => {
     router.push('/catalog')
     onClose()
   }
 
-  // Check if we're on catalog page without category filter (all products)
-  const isAllProductsActive = !currentCategory
+  const scrollToSection = (elementId: string) => {
+    const element = document.getElementById(elementId)
+    if (element) {
+      // Получаем реальную высоту хедера
+      const header = document.querySelector('header') || document.querySelector('nav')
+      const headerHeight = header ? header.offsetHeight + 20 : 100 // +20px дополнительный отступ
+      const elementPosition = element.offsetTop - headerHeight
+      
+      window.scrollTo({
+        top: elementPosition,
+        behavior: 'smooth'
+      })
+    }
+  }
+
+  const handlePopularToysClick = () => {
+    if (pathname === '/') {
+      // Если уже на главной странице, просто прокручиваем
+      scrollToSection('popular-toys')
+    } else {
+      // Если не на главной, переходим с hash якорем
+      router.push('/#popular-toys')
+    }
+    onClose()
+  }
+
+  const handleBrandsClick = () => {
+    if (pathname === '/') {
+      // Если уже на главной странице, просто прокручиваем
+      scrollToSection('brands')
+    } else {
+      // Если не на главной, переходим с hash якорем
+      router.push('/#brands')
+    }
+    onClose()
+  }
+
+  // Check which menu item is active
+  const isCatalogActive = pathname === '/catalog'
+  const isPopularActive = false // Не используем активное состояние для главной страницы
+  const isBrandsActive = false // Не используем активное состояние для главной страницы
 
   return (
     <>
@@ -104,7 +101,7 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-montserrat font-bold text-gray-800">Категории</h2>
+          <h2 className="text-xl font-montserrat font-bold text-gray-800">Меню</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -116,80 +113,97 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto"></div>
-              <p className="mt-2 text-gray-600 font-montserrat">Загрузка категорий...</p>
-            </div>
-          ) : error ? (
-            <div className="p-6 text-center">
-              <p className="text-red-500 font-montserrat">{error}</p>
-            </div>
-          ) : (
-            <div className="py-4">
-              {/* Все товары */}
-              <button
-                onClick={handleAllProductsClick}
-                className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
-                  isAllProductsActive 
-                    ? 'bg-sky-50 border-r-4 border-sky-500' 
-                    : 'hover:bg-gray-50'
-                }`}
-              >
+          <div className="py-4">
+            {/* Открыть каталог */}
+            <button
+              onClick={handleCatalogClick}
+              className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                isCatalogActive && !isPopularActive && !isBrandsActive
+                  ? 'bg-sky-50 border-r-4 border-sky-500' 
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Package size={20} className={`transition-colors ${
+                  isCatalogActive && !isPopularActive && !isBrandsActive
+                    ? 'text-sky-600' 
+                    : 'text-gray-500 group-hover:text-sky-600'
+                }`} />
                 <span className={`font-medium font-montserrat ${
-                  isAllProductsActive 
+                  isCatalogActive && !isPopularActive && !isBrandsActive
                     ? 'text-sky-600 font-semibold' 
                     : 'text-gray-800 group-hover:text-sky-600'
                 }`}>
-                  Все товары
+                  Открыть каталог
                 </span>
-                <ChevronRight size={16} className={`transition-colors ${
-                  isAllProductsActive 
+              </div>
+              <ChevronRight size={16} className={`transition-colors ${
+                isCatalogActive && !isPopularActive && !isBrandsActive
+                  ? 'text-sky-600' 
+                  : 'text-gray-400 group-hover:text-sky-600'
+              }`} />
+            </button>
+
+            {/* Популярные игрушки */}
+            <button
+              onClick={handlePopularToysClick}
+              className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                isPopularActive
+                  ? 'bg-sky-50 border-r-4 border-sky-500' 
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Star size={20} className={`transition-colors ${
+                  isPopularActive
                     ? 'text-sky-600' 
-                    : 'text-gray-400 group-hover:text-sky-600'
+                    : 'text-gray-500 group-hover:text-sky-600'
                 }`} />
-              </button>
+                <span className={`font-medium font-montserrat ${
+                  isPopularActive
+                    ? 'text-sky-600 font-semibold' 
+                    : 'text-gray-800 group-hover:text-sky-600'
+                }`}>
+                  Популярные игрушки
+                </span>
+              </div>
+              <ChevronRight size={16} className={`transition-colors ${
+                isPopularActive
+                  ? 'text-sky-600' 
+                  : 'text-gray-400 group-hover:text-sky-600'
+              }`} />
+            </button>
 
-              {/* Разделитель */}
-              <div className="mx-6 my-2 border-t border-gray-200"></div>
-
-              {/* Категории */}
-              {categories.length > 0 ? (
-                categories.map((category) => {
-                  const isActive = currentCategory === category.id
-                  
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id)}
-                      className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
-                        isActive 
-                          ? 'bg-sky-50 border-r-4 border-sky-500' 
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className={`font-medium font-montserrat ${
-                        isActive 
-                          ? 'text-sky-600 font-semibold' 
-                          : 'text-gray-700 group-hover:text-sky-600'
-                      }`}>
-                        {category.name}
-                      </span>
-                      <ChevronRight size={16} className={`transition-colors ${
-                        isActive 
-                          ? 'text-sky-600' 
-                          : 'text-gray-400 group-hover:text-sky-600'
-                      }`} />
-                    </button>
-                  )
-                })
-              ) : (
-                <div className="px-6 py-8 text-center">
-                  <p className="text-gray-500 font-montserrat">Категории не найдены</p>
-                </div>
-              )}
-            </div>
-          )}
+            {/* Бренды */}
+            <button
+              onClick={handleBrandsClick}
+              className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                isBrandsActive
+                  ? 'bg-sky-50 border-r-4 border-sky-500' 
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Award size={20} className={`transition-colors ${
+                  isBrandsActive
+                    ? 'text-sky-600' 
+                    : 'text-gray-500 group-hover:text-sky-600'
+                }`} />
+                <span className={`font-medium font-montserrat ${
+                  isBrandsActive
+                    ? 'text-sky-600 font-semibold' 
+                    : 'text-gray-800 group-hover:text-sky-600'
+                }`}>
+                  Бренды
+                </span>
+              </div>
+              <ChevronRight size={16} className={`transition-colors ${
+                isBrandsActive
+                  ? 'text-sky-600' 
+                  : 'text-gray-400 group-hover:text-sky-600'
+              }`} />
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -203,7 +217,7 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-montserrat font-bold text-gray-800">Категории</h2>
+          <h2 className="text-xl font-montserrat font-bold text-gray-800">Меню</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
