@@ -24,6 +24,7 @@ interface Product {
   brand_id?: string
   gender?: string
   is_new?: boolean
+  height?: string
 }
 
 interface Category {
@@ -53,6 +54,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
     brand_id: '',
     gender: 'all',
     is_new: false,
+    height: '',
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -213,6 +215,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
           brand_id: '',
           gender: 'all',
           is_new: false,
+          height: '',
         });
         setImageFile(null);
         setAdditionalImageFiles([]);
@@ -433,6 +436,17 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
           <option value="boys">Мальчики</option>
           <option value="girls">Девочки</option>
         </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="height">Высота игрушки</label>
+        <input
+          type="text"
+          name="height"
+          value={formData.height}
+          onChange={handleChange}
+          placeholder="Например: 12см"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
       </div>
       <button 
         type="submit" 
@@ -1049,7 +1063,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new, height')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -1069,7 +1083,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new, height')
 
     if (productsError) {
       // eslint-disable-next-line no-console

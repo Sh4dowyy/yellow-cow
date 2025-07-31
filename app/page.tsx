@@ -1,7 +1,7 @@
 "use client"
 
 import ProductCard from "@/components/product-card"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { supabase } from "@/utils/supabase/supabaseClient"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
@@ -15,6 +15,7 @@ interface Product {
   in_stock: boolean
   is_new?: boolean
   brand_id?: string
+  height?: string
 }
 
 interface Brand {
@@ -57,7 +58,7 @@ export default function Home() {
   }
 
   // Функция для скролла с учетом высоты хедера
-  const scrollToSection = (elementId: string) => {
+  const scrollToSection = useCallback((elementId: string) => {
     const element = document.getElementById(elementId)
     if (element) {
       // Получаем реальную высоту хедера
@@ -70,7 +71,31 @@ export default function Home() {
         behavior: 'smooth'
       })
     }
-  }
+  }, [])
+
+  // Обработка hash якорей для прокрутки к секциям
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '')
+      if (hash) {
+        setTimeout(() => {
+          scrollToSection(hash)
+        }, 100)
+      }
+    }
+
+    // Проверяем hash при загрузке страницы
+    if (window.location.hash) {
+      handleHashChange()
+    }
+
+    // Слушаем изменения hash в URL
+    window.addEventListener('hashchange', handleHashChange)
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [scrollToSection])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,7 +103,7 @@ export default function Home() {
         // Fetch featured products
         const { data: productsData, error: productsError } = await supabase
           .from('products')
-          .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, brand_id')
+          .select('id, name, description, image_url, image_urls, category_id, in_stock, is_new, brand_id, height')
           .eq('is_featured', true)
 
         if (productsError) {
@@ -255,14 +280,43 @@ export default function Home() {
                     {popularToys.length > 0 ? (
             <>
               {/* Мобильная версия с горизонтальным скроллом */}
-              <div className="block sm:hidden overflow-hidden">
-                <div className="flex gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide">
+              <div className="block sm:hidden overflow-hidden relative">
+                <div id="mobile-popular-scroll" className="flex gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide">
                   {popularToys.map((toy) => (
                     <div key={toy.id} className="flex-shrink-0">
                       <ProductCard product={toy} width="w-[160px]" brandName={brands.find(brand => brand.id === toy.brand_id)?.name} />
                     </div>
                   ))}
                 </div>
+                
+                {/* Кнопки навигации для мобильных */}
+                {popularToys.length > 2 && (
+                  <>
+                    {/* Кнопка "Назад" */}
+                    <button
+                      onClick={() => {
+                        const container = document.getElementById('mobile-popular-scroll');
+                        if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+                      }}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white z-10"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-blue-500" />
+                    </button>
+                    
+                    {/* Кнопка "Вперед" + градиент */}
+                    <div className="absolute top-0 right-0 bottom-4 w-8 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none flex items-center justify-center">
+                      <button
+                        onClick={() => {
+                          const container = document.getElementById('mobile-popular-scroll');
+                          if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+                        }}
+                        className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white pointer-events-auto animate-pulse"
+                      >
+                        <ChevronRight className="h-4 w-4 text-blue-500" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Десктопная версия с горизонтальным скроллом и кнопками */}
@@ -321,8 +375,8 @@ export default function Home() {
           {brands.length > 0 ? (
             <>
               {/* Мобильная версия с горизонтальным скроллом */}
-              <div className="block sm:hidden overflow-hidden">
-                <div className="flex gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide">
+              <div className="block sm:hidden overflow-hidden relative">
+                <div id="mobile-brands-scroll" className="flex gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide">
                   {brands.map((brand) => (
                     <a 
                       key={brand.id} 
@@ -347,6 +401,35 @@ export default function Home() {
                     </a>
                   ))}
                 </div>
+                
+                {/* Кнопки навигации для мобильных */}
+                {brands.length > 4 && (
+                  <>
+                    {/* Кнопка "Назад" */}
+                    <button
+                      onClick={() => {
+                        const container = document.getElementById('mobile-brands-scroll');
+                        if (container) container.scrollBy({ left: -160, behavior: 'smooth' });
+                      }}
+                      className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white z-10"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-blue-500" />
+                    </button>
+                    
+                    {/* Кнопка "Вперед" + градиент */}
+                    <div className="absolute top-0 right-0 bottom-4 w-8 bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent pointer-events-none flex items-center justify-center">
+                      <button
+                        onClick={() => {
+                          const container = document.getElementById('mobile-brands-scroll');
+                          if (container) container.scrollBy({ left: 160, behavior: 'smooth' });
+                        }}
+                        className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white pointer-events-auto animate-pulse"
+                      >
+                        <ChevronRight className="h-4 w-4 text-blue-500" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Версия для планшетов и десктопов */}

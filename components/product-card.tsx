@@ -20,6 +20,7 @@ interface Product {
   brand_id?: string
   gender?: string
   is_new?: boolean
+  height?: string
 }
 
 interface ProductCardProps {
@@ -43,9 +44,18 @@ export default function ProductCard({ product, width = "max-w-[280px]", brandNam
             className="object-cover group-hover:scale-105 transition-transform duration-300" 
           />
           
-          {/* Stock status badge - top right - only show when out of stock */}
-          {product.in_stock !== undefined && !product.in_stock && (
+          {/* Height badge - top right */}
+          {product.height && (
             <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
+              <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs font-semibold">
+                {product.height}
+              </Badge>
+            </div>
+          )}
+
+          {/* Stock status badge - top right (below height if both exist) - only show when out of stock */}
+          {product.in_stock !== undefined && !product.in_stock && (
+            <div className={`absolute right-1 sm:right-2 ${product.height ? 'top-8 sm:top-10' : 'top-1 sm:top-2'}`}>
               <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
                 <XCircle className="h-3 w-3 mr-1" />
                 <span className="hidden sm:inline">Нет в наличии</span>
