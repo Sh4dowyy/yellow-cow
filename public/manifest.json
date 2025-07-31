@@ -8,15 +8,15 @@
   "theme_color": "#00BBF3",
   "icons": [
     {
-      "src": "/logos/aria-toys-logo.png",
+      "src": "/icon.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/logos/aria-toys-logo.png",
+      "src": "/icon.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
