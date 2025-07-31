@@ -1,0 +1,23 @@
+{
+  "name": "Aria Toys - Детские игрушки",
+  "short_name": "Aria Toys",
+  "description": "Интернет-магазин качественных детских игрушек",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00BBF3",
+  "icons": [
+    {
+      "src": "/logos/aria-toys-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logos/aria-toys-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
