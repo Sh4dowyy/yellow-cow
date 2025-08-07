@@ -194,6 +194,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
               className="h-12 w-20"
             />
           </Link>
+          
 
           {/* Spacer */}
           <div className="flex-1"></div>

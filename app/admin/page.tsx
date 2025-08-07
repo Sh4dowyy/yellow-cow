@@ -39,6 +39,18 @@ interface Brand {
 }
 
 
+interface BlogPost {
+  id: string
+  title: string
+  category: string
+  cover_url: string
+  excerpt: string | null
+  content: string | null
+  published: boolean
+  created_at: string
+}
+
+
 
 const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onProductAdded?: () => void, refreshCategories?: () => void, refreshBrands?: () => void }) => {
   const [formData, setFormData] = useState({
@@ -1122,11 +1134,12 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="add" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
+        <TabsList className="grid w-full grid-cols-5 mb-8">
           <TabsTrigger value="add">Добавить товар</TabsTrigger>
           <TabsTrigger value="manage">Управление товарами</TabsTrigger>
           <TabsTrigger value="categories">Управление категориями</TabsTrigger>
           <TabsTrigger value="brands">Управление брендами</TabsTrigger>
+          <TabsTrigger value="blog">Блог</TabsTrigger>
         </TabsList>
 
         <TabsContent value="add">
@@ -1184,7 +1197,272 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="blog">
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление блогом</CardTitle>
+              <CardDescription>Создание, редактирование и удаление постов</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BlogManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+const BlogManagement = () => {
+  const [posts, setPosts] = useState<BlogPost[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const [title, setTitle] = useState("")
+  const [category, setCategory] = useState("Blog")
+  const [coverUrl, setCoverUrl] = useState("")
+  const [excerpt, setExcerpt] = useState("")
+  const [content, setContent] = useState("")
+  const [published, setPublished] = useState(true)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValues, setEditValues] = useState<Partial<BlogPost>>({})
+  const [editCoverFile, setEditCoverFile] = useState<File | null>(null)
+
+  useEffect(() => {
+    fetchPosts()
+  }, [])
+
+  const fetchPosts = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('id, title, category, cover_url, excerpt, content, published, created_at')
+      .order('created_at', { ascending: false })
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching blog posts:', error)
+      setError('Не удалось загрузить посты блога')
+    } else {
+      setPosts((data || []) as BlogPost[])
+    }
+    setLoading(false)
+  }
+
+  const uploadBlogImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `blog-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const filePath = `covers/${fileName}`
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file)
+      if (uploadError) {
+        // eslint-disable-next-line no-console
+        console.error('Error uploading cover:', uploadError)
+        return null
+      }
+      const { data } = supabase.storage.from('blog-images').getPublicUrl(filePath)
+      return data.publicUrl
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Unexpected upload error:', e)
+      return null
+    }
+  }
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    try {
+      let finalCoverUrl = coverUrl
+      if (!finalCoverUrl && coverFile) {
+        const uploaded = await uploadBlogImage(coverFile)
+        if (!uploaded) {
+          alert('Не удалось загрузить обложку')
+          setSubmitting(false)
+          return
+        }
+        finalCoverUrl = uploaded
+      }
+
+      const { error } = await supabase.from('blog_posts').insert({
+        title,
+        category,
+        cover_url: finalCoverUrl,
+        excerpt: excerpt || null,
+        content: content || null,
+        published,
+      })
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error creating post:', error)
+        alert('Не удалось создать пост')
+      } else {
+        setTitle("")
+        setCategory('Blog')
+        setCoverUrl("")
+        setExcerpt("")
+        setContent("")
+        setPublished(true)
+        setCoverFile(null)
+        await fetchPosts()
+        alert('Пост создан')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const startEdit = (post: BlogPost) => {
+    setEditingId(post.id)
+    setEditValues({ ...post })
+    setEditCoverFile(null)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditValues({})
+    setEditCoverFile(null)
+  }
+
+  const saveEdit = async () => {
+    if (!editingId) return
+    const updates: any = { ...editValues }
+    delete updates.id
+    delete updates.created_at
+    if (editCoverFile) {
+      const uploaded = await uploadBlogImage(editCoverFile)
+      if (!uploaded) {
+        alert('Не удалось загрузить новую обложку')
+        return
+      }
+      updates.cover_url = uploaded
+    }
+    const { error } = await supabase
+      .from('blog_posts')
+      .update(updates)
+      .eq('id', editingId)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating post:', error)
+      alert('Не удалось обновить пост')
+    } else {
+      await fetchPosts()
+      cancelEdit()
+      alert('Пост обновлён')
+    }
+  }
+
+  const deletePost = async (post: BlogPost) => {
+    if (!confirm(`Удалить пост "${post.title}"?`)) return
+    const { error } = await supabase
+      .from('blog_posts')
+      .delete()
+      .eq('id', post.id)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error deleting post:', error)
+      alert('Не удалось удалить пост')
+    } else {
+      await fetchPosts()
+      alert('Пост удалён')
+    }
+  }
+
+  return (
+    <div className="space-y-10">
+      <div className="bg-gray-50 p-6 rounded-lg border">
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">➕ Создать пост</h3>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Заголовок</label>
+            <input className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Категория</label>
+            <input className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" value={category} onChange={(e) => setCategory(e.target.value)} required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Обложка (URL или загрузка файла)</label>
+            <input className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" placeholder="https://..." value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
+            <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files ? e.target.files[0] : null)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Краткое описание</label>
+            <textarea className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Контент</label>
+            <textarea className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" rows={6} value={content} onChange={(e) => setContent(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input id="published" type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+            <label htmlFor="published" className="text-sm text-gray-700">Опубликовано</label>
+          </div>
+          <Button disabled={submitting} type="submit">{submitting ? 'Сохранение...' : 'Создать пост'}</Button>
+        </form>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-montserrat font-semibold text-gray-800 mb-4">📋 Посты</h3>
+        {loading ? (
+          <div className="text-center py-4">Загрузка постов...</div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">Пока нет постов</div>
+        ) : (
+          <div className="space-y-3">
+            {posts.map((post) => (
+              <div key={post.id} className="p-4 bg-white border border-gray-200 rounded-lg">
+                {editingId === post.id ? (
+                  <div className="space-y-3">
+                    <input className="w-full border border-gray-300 rounded-md shadow-sm p-2" value={editValues.title || ''} onChange={(e) => setEditValues((v) => ({ ...v, title: e.target.value }))} />
+                    <input className="w-full border border-gray-300 rounded-md shadow-sm p-2" value={editValues.category || ''} onChange={(e) => setEditValues((v) => ({ ...v, category: e.target.value }))} />
+                    <input className="w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Обложка URL" value={editValues.cover_url || ''} onChange={(e) => setEditValues((v) => ({ ...v, cover_url: e.target.value }))} />
+                    <input type="file" accept="image/*" onChange={(e) => setEditCoverFile(e.target.files ? e.target.files[0] : null)} />
+                    <textarea className="w-full border border-gray-300 rounded-md shadow-sm p-2" placeholder="Краткое" value={editValues.excerpt || ''} onChange={(e) => setEditValues((v) => ({ ...v, excerpt: e.target.value }))} />
+                    <textarea className="w-full border border-gray-300 rounded-md shadow-sm p-2" rows={5} placeholder="Контент" value={editValues.content || ''} onChange={(e) => setEditValues((v) => ({ ...v, content: e.target.value }))} />
+                    <div className="flex items-center gap-2">
+                      <input id={`pub-${post.id}`} type="checkbox" checked={!!editValues.published} onChange={(e) => setEditValues((v) => ({ ...v, published: e.target.checked }))} />
+                      <label htmlFor={`pub-${post.id}`} className="text-sm text-gray-700">Опубликовано</label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={saveEdit}>Сохранить</Button>
+                      <Button variant="outline" onClick={cancelEdit}>Отмена</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-4">
+                    <div className="w-24 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                      {post.cover_url ? (
+                        <img src={post.cover_url} alt={post.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">Нет обложки</div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-montserrat font-semibold text-gray-800">{post.title}</h4>
+                        <span className="text-xs px-2 py-0.5 rounded bg-gray-100 border text-gray-600">{post.category}</span>
+                        {!post.published && <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 border text-yellow-700">Черновик</span>}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{post.excerpt}</p>
+                      <div className="text-xs text-gray-400 mt-1">{new Date(post.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => startEdit(post)}>Изменить</Button>
+                      <Button variant="destructive" onClick={() => deletePost(post)}>Удалить</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

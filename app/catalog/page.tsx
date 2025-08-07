@@ -384,7 +384,7 @@ function CatalogContent() {
   return (
     <div className="min-h-screen" style={{background: 'linear-gradient(to bottom,rgb(255, 255, 255),rgb(255, 255, 255))'}}>
       {/* Mobile Filter Sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileFiltersOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[60] lg:hidden transition-opacity duration-300 ${isMobileFiltersOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Overlay */}
         <div 
           className="absolute inset-0 bg-black bg-opacity-50"
@@ -409,15 +409,16 @@ function CatalogContent() {
               </button>
             </div>
             
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* Brand Filters */}
-              <div>
-                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-2">
-                  Фильтр по бренду
-                </h3>
-                
-                <div className="space-y-0.5">
+            {/* Scrollable Content with Sticky Headers */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Brand Filters Section */}
+              <div className="relative">
+                <div className="sticky top-0 bg-white z-20 px-4 py-3 border-b border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-montserrat font-semibold text-blue-700">
+                    Фильтр по бренду
+                  </h3>
+                </div>
+                <div className="p-4 space-y-0.5 bg-gray-50">
                   {getBrandCounts().map((brand) => (
                     <label
                       key={brand.id}
@@ -447,13 +448,14 @@ function CatalogContent() {
                 </div>
               </div>
 
-              {/* Category Filters */}
-              <div>
-                <h3 className="text-lg font-montserrat font-semibold text-blue-700 mb-2">
-                  Фильтр по категориям
-                </h3>
-                
-                <div className="space-y-0.5">
+              {/* Category Filters Section */}
+              <div className="relative">
+                <div className="sticky top-0 bg-white z-20 px-4 py-3 border-b border-gray-200 shadow-sm">
+                  <h3 className="text-lg font-montserrat font-semibold text-blue-700">
+                    Фильтр по категориям
+                  </h3>
+                </div>
+                <div className="p-4 space-y-0.5 bg-gray-50">
                   {getCategoryCounts().map((category) => (
                     <label
                       key={category.id}
