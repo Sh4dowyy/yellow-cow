@@ -551,7 +551,7 @@ function CatalogContent() {
         <div className="flex gap-8">
           {/* Sidebar with Brand Filters */}
           <div className="hidden lg:block w-80 flex-shrink-0">
-            <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 shadow-sm sticky top-8">
+            <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-4 shadow-sm sticky top-4">
               <h3 className="text-xl font-montserrat font-bold text-blue-700 mb-4 text-center">
                 Фильтр по бренду
               </h3>
