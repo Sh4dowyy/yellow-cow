@@ -44,6 +44,7 @@ export default function ProductCard({ product, width = "max-w-[280px]", brandNam
             className="object-cover group-hover:scale-105 transition-transform duration-300" 
           />
           
+          
           {/* Height badge - top right */}
           {product.height && (
             <div className="absolute top-1 sm:top-2 right-1 sm:right-2">
