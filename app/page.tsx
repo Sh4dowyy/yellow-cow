@@ -232,7 +232,7 @@ export default function Home() {
             {/* ARIA TOYS Logo */}
             <div className="mb-6">
               <img 
-                src="/icon.svg" 
+                src="/favicon-192x192.png" 
                 alt="ARIA TOYS"
                 className="h-24 sm:h-32 md:h-40 lg:h-48 w-auto mx-auto mb-3"
               />
