@@ -492,6 +492,7 @@ export default function Home() {
                       <h4 className="text-xl font-montserrat font-semibold text-white mb-3">
                         Wildberries
                       </h4>
+                      
                       <a
                         href="https://www.wildberries.ru/seller/4349348"
                         target="_blank"
