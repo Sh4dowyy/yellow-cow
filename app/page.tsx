@@ -477,22 +477,6 @@ export default function Home() {
         
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="flex items-center justify-center mb-6">
-                <img 
-                  src="/icon.svg" 
-                  alt="ARIA TOYS"
-                  className="h-12 w-auto mr-4"
-                />
-                <h2 className="text-3xl text-white">
-                  - Где купить
-                </h2>
-              </div>
-              <p className="text-blue-100 font-montserrat leading-relaxed text-lg max-w-3xl mx-auto">
-                Мы специализируемся на качественных детских игрушках, которые развивают воображение и творческие способности. 
-                Найдите наши игрушки в популярных интернет-магазинах!
-              </p>
-            </div>
             
             <div className="max-w-4xl mx-auto">
               {/* Our Stores */}
