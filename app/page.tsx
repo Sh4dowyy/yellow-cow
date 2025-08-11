@@ -481,7 +481,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto">
               {/* Our Stores */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
-                <h3 className="text-2xl text-white mb-8 text-center">
+                <h3 id="our-stores" className="text-2xl text-white mb-8 text-center">
                   🛍️ Наши магазины
                 </h3>
                 
@@ -492,6 +492,7 @@ export default function Home() {
                       <h4 className="text-xl font-montserrat font-semibold text-white mb-3">
                         Wildberries
                       </h4>
+                      
                       <a
                         href="https://www.wildberries.ru/seller/4349348"
                         target="_blank"

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, Suspense } from "react"
-import { X, ChevronRight, Package, Star, Award } from "lucide-react"
+import { X, ChevronRight, Package, Star, Award, Store } from "lucide-react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 
@@ -42,45 +42,49 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
 
   const scrollToSection = (elementId: string) => {
     const element = document.getElementById(elementId)
-    if (element) {
-      // Получаем реальную высоту хедера
-      const header = document.querySelector('header') || document.querySelector('nav')
-      const headerHeight = header ? header.offsetHeight + 20 : 100 // +20px дополнительный отступ
-      const elementPosition = element.offsetTop - headerHeight
-      
-      window.scrollTo({
-        top: elementPosition,
-        behavior: 'smooth'
-      })
-    }
+    if (!element) return
+    const header = document.querySelector('header') || document.querySelector('nav')
+    const headerHeight = header ? header.offsetHeight + 20 : 100
+    const rect = element.getBoundingClientRect()
+    const absoluteTop = window.pageYOffset + rect.top - headerHeight
+    window.scrollTo({ top: absoluteTop, behavior: 'smooth' })
   }
 
   const handlePopularToysClick = () => {
     if (pathname === '/') {
-      // Если уже на главной странице, просто прокручиваем
-      scrollToSection('popular-toys')
+      onClose()
+      setTimeout(() => scrollToSection('popular-toys'), 320)
     } else {
-      // Если не на главной, переходим с hash якорем
       router.push('/#popular-toys')
+      onClose()
     }
-    onClose()
   }
 
   const handleBrandsClick = () => {
     if (pathname === '/') {
-      // Если уже на главной странице, просто прокручиваем
-      scrollToSection('brands')
+      onClose()
+      setTimeout(() => scrollToSection('brands'), 320)
     } else {
-      // Если не на главной, переходим с hash якорем
       router.push('/#brands')
+      onClose()
     }
-    onClose()
+  }
+
+  const handleStoresClick = () => {
+    if (pathname === '/') {
+      onClose()
+      setTimeout(() => scrollToSection('our-stores'), 320)
+    } else {
+      router.push('/#our-stores')
+      onClose()
+    }
   }
 
   // Check which menu item is active
   const isCatalogActive = pathname === '/catalog'
   const isPopularActive = false // Не используем активное состояние для главной страницы
   const isBrandsActive = false // Не используем активное состояние для главной страницы
+  const isStoresActive = false // Не используем активное состояние для главной страницы
 
   return (
     <>
@@ -199,6 +203,36 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
               </div>
               <ChevronRight size={16} className={`transition-colors ${
                 isBrandsActive
+                  ? 'text-sky-600' 
+                  : 'text-gray-400 group-hover:text-sky-600'
+              }`} />
+            </button>
+
+            {/* Наши магазины */}
+            <button
+              onClick={handleStoresClick}
+              className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                isStoresActive
+                  ? 'bg-sky-50 border-r-4 border-sky-500' 
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Store size={20} className={`transition-colors ${
+                  isStoresActive
+                    ? 'text-sky-600' 
+                    : 'text-gray-500 group-hover:text-sky-600'
+                }`} />
+                <span className={`font-medium font-montserrat ${
+                  isStoresActive
+                    ? 'text-sky-600 font-semibold' 
+                    : 'text-gray-800 group-hover:text-sky-600'
+                }`}>
+                  Наши магазины
+                </span>
+              </div>
+              <ChevronRight size={16} className={`transition-colors ${
+                isStoresActive
                   ? 'text-sky-600' 
                   : 'text-gray-400 group-hover:text-sky-600'
               }`} />
