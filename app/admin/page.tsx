@@ -19,6 +19,7 @@ interface Product {
   in_stock: boolean
   wb_url: string
   ozon_url: string
+  video_url?: string
   sku?: string
   age_range?: string
   brand_id?: string
@@ -61,6 +62,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
     in_stock: false,
     wb_url: '',
     ozon_url: '',
+    video_url: '',
     sku: '',
     age_range: '',
     brand_id: '',
@@ -180,6 +182,16 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
 
     setIsUploading(true);
 
+    const extractIframeSrc = (value: string) => {
+      if (!value) return '';
+      const trimmed = value.trim();
+      if (/^<iframe/i.test(trimmed)) {
+        const match = trimmed.match(/src\s*=\s*"([^"]+)"|src\s*=\s*'([^']+)'/i);
+        return match ? (match[1] || match[2] || '') : '';
+      }
+      return trimmed;
+    };
+
     try {
       // Upload main image
       const imageUrl = await uploadImage(imageFile);
@@ -204,6 +216,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
         .from('products')
         .insert([{ 
           ...formData, 
+          video_url: extractIframeSrc(formData.video_url),
           image_url: imageUrl,
           image_urls: additionalImageUrls.length > 0 ? additionalImageUrls : null
         }]);
@@ -222,6 +235,7 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
           in_stock: false,
           wb_url: '',
           ozon_url: '',
+          video_url: '',
           sku: '',
           age_range: '',
           brand_id: '',
@@ -395,6 +409,16 @@ const ProductForm = ({ onProductAdded, refreshCategories, refreshBrands }: { onP
           value={formData.ozon_url}
           onChange={handleChange}
           placeholder="Введите ссылку на Ozon"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700" htmlFor="video_url">Видео (URL)</label>
+        <input
+          type="text"
+          name="video_url"
+          value={formData.video_url}
+          onChange={handleChange}
           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
         />
       </div>
@@ -1075,7 +1099,7 @@ export default function AdminPage() {
     const fetchProducts = async () => {
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new, height')
+        .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, video_url, sku, age_range, brand_id, gender, is_new, height')
 
       if (productsError) {
         // eslint-disable-next-line no-console
@@ -1095,7 +1119,7 @@ export default function AdminPage() {
     // Refetch products after deletion
     const { data: productsData, error: productsError } = await supabase
       .from('products')
-      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, sku, age_range, brand_id, gender, is_new, height')
+      .select('id, name, description, image_url, image_urls, category_id, is_featured, in_stock, wb_url, ozon_url, video_url, sku, age_range, brand_id, gender, is_new, height')
 
     if (productsError) {
       // eslint-disable-next-line no-console

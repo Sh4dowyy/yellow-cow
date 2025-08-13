@@ -21,6 +21,7 @@ interface Product {
   in_stock: boolean
   wb_url: string
   ozon_url: string
+  video_url?: string
   sku?: string
   age_range?: string
   brand_id?: string
@@ -61,6 +62,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     image_url: '',
     wb_url: '',
     ozon_url: '',
+    video_url: '',
     sku: '',
     age_range: '',
     brand_id: '',
@@ -163,6 +165,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
       image_url: product.image_url,
       wb_url: product.wb_url || '',
       ozon_url: product.ozon_url || '',
+      video_url: product.video_url || '',
       sku: product.sku || '',
       age_range: product.age_range || '',
       brand_id: product.brand_id || '',
@@ -279,6 +282,16 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
 
     setIsUpdating(true)
 
+    const extractIframeSrc = (value: string) => {
+      if (!value) return ''
+      const trimmed = value.trim()
+      if (/^<iframe/i.test(trimmed)) {
+        const match = trimmed.match(/src\s*=\s*"([^"]+)"|src\s*=\s*'([^']+)'/i)
+        return match ? (match[1] || match[2] || '') : ''
+      }
+      return trimmed
+    }
+
     try {
       let imageUrl = editFormData.image_url
       let additionalImageUrls = editingProduct.image_urls || []
@@ -318,6 +331,7 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
         .from('products')
         .update({ 
           ...editFormData, 
+          video_url: extractIframeSrc(editFormData.video_url),
           image_url: imageUrl,
           image_urls: additionalImageUrls.length > 0 ? additionalImageUrls : null
         })
@@ -342,6 +356,16 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
     }
   }
 
+  const previewVideoSrc = (() => {
+    const value = (editFormData.video_url || '').trim()
+    if (!value) return ''
+    if (/^<iframe/i.test(value)) {
+      const match = value.match(/src\s*=\s*"([^"]+)"|src\s*=\s*'([^']+)'/i)
+      return match ? (match[1] || match[2] || '') : ''
+    }
+    return value
+  })()
+
   return (
     <div className="space-y-6">
       {/* Search Bar */}
@@ -355,7 +379,6 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
           className="pl-10"
         />
       </div>
-
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
         <div className="text-center py-8">
@@ -689,6 +712,36 @@ export default function ProductList({ products, onProductDeleted }: ProductListP
               )}
             </div>
             
+            <div>
+              <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-video-url">
+                Видео (iframe/URL)
+              </label>
+              <Input
+                id="edit-video-url"
+                name="video_url"
+                value={editFormData.video_url}
+                onChange={handleEditFormChange}
+                placeholder="https://vk.com/video_ext.php?..."
+                className="text-lg h-12"
+              />
+              <p className="text-base text-gray-500 mt-2">Можно вставить весь iframe или только src. Предпросмотр ниже.</p>
+              {previewVideoSrc && (
+                <div className="mt-4">
+                  <div className="relative w-full max-w-sm aspect-[325/646]">
+                    <iframe
+                      src={previewVideoSrc}
+                      allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock"
+                      frameBorder={0}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="absolute inset-0 h-full w-full rounded-lg shadow"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block text-lg font-medium text-gray-700 mb-3" htmlFor="edit-wb-url">
                 Wildberries URL

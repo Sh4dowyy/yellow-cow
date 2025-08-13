@@ -20,6 +20,7 @@ interface Toy {
   brand_id?: string;
   is_new?: boolean;
   height?: string;
+  video_url?: string;
 }
 
 interface Category {
@@ -147,7 +148,7 @@ function CatalogContent() {
     const fetchToysAndCategories = async () => {
       const { data: toysData, error: toysError } = await supabase
         .from('products')
-        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, brand_id, is_new, height');
+        .select('id, name, description, category_id, image_url, image_urls, in_stock, sku, age_range, brand_id, is_new, height, video_url');
 
       if (toysError) {
         console.error("Error fetching toys:", toysError);
