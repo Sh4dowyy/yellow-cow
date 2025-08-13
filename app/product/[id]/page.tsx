@@ -9,7 +9,7 @@ import ContactButton from "@/components/contact-button"
 import ProductCard from "@/components/product-card"
 import { supabase } from "@/utils/supabase/supabaseClient";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ShoppingBag, Package, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Package, CheckCircle, XCircle, Play } from "lucide-react";
 
 interface Product {
   id: string;
@@ -28,6 +28,7 @@ interface Product {
   gender?: string; // Пол
   is_new?: boolean; // Новинка
   height?: string; // Высота
+    video_url?: string; // Ссылка на встраиваемое видео
 }
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -58,6 +59,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           image_urls,
           wb_url,
           ozon_url,
+          video_url,
           sku,
           age_range,
           brand_id,
@@ -95,6 +97,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             image_urls,
             wb_url,
             ozon_url,
+            video_url,
             sku,
             age_range,
             brand_id,
@@ -177,10 +180,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   // Используем только дополнительные изображения для галереи (без основного)
   const allImages = (product.image_urls || []).filter(Boolean);
+  const hasVideo = Boolean(product.video_url);
+  const isVideoSelected = hasVideo && selectedImageIndex === 0;
 
   // Если есть дополнительные изображения, используем их, иначе показываем основное
   const currentImage = allImages.length > 0 
-    ? allImages[selectedImageIndex] 
+    ? allImages[Math.min(Math.max(selectedImageIndex - (hasVideo ? 1 : 0), 0), allImages.length - 1)] 
     : product.image_url || "/placeholder.svg";
 
   return (
@@ -201,31 +206,57 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Image Gallery Section */}
           <div className="space-y-4 max-w-full overflow-hidden">
-            {/* Main Image */}
+            {/* Main Media (image or video) */}
             <Card className="p-2 bg-white shadow-lg border-0 max-w-full">
               <div className="relative w-full h-96 lg:h-[500px] bg-white rounded-lg overflow-hidden">
-                <Image
-                  src={currentImage}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-contain p-6 hover:scale-105 transition-transform duration-300"
-                  unoptimized
-                  priority
-                />
+                {isVideoSelected ? (
+                  <iframe
+                    src={product.video_url as string}
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock"
+                    frameBorder={0}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="absolute inset-0 h-full w-full"
+                  />
+                ) : (
+                  <Image
+                    src={currentImage}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-contain p-6 hover:scale-105 transition-transform duration-300"
+                    unoptimized
+                    priority
+                  />
+                )}
               </div>
             </Card>
             
 
-            {/* Image Thumbnails */}
-            {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
+            {/* Media Thumbnails */}
+            {(allImages.length > 1 || hasVideo) && (
+              <div className="flex gap-2 overflow-x-auto pb-2 items-center">
+                {hasVideo && (
+                  <button
+                    onClick={() => setSelectedImageIndex(0)}
+                    className={`flex-shrink-0 relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 flex items-center justify-center bg-gray-50 ${
+                      isVideoSelected
+                        ? 'border-blue-500 ring-2 ring-blue-200'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    aria-label="Видео"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/40 to-black/10" />
+                    <Play className="h-8 w-8 text-white relative z-10" />
+                  </button>
+                )}
                 {allImages.map((imageUrl, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => setSelectedImageIndex(hasVideo ? index + 1 : index)}
                     className={`flex-shrink-0 relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                      index === selectedImageIndex 
+                      (hasVideo ? index + 1 : index) === selectedImageIndex 
                         ? 'border-blue-500 ring-2 ring-blue-200' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}

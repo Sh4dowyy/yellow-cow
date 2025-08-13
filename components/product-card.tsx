@@ -21,6 +21,7 @@ interface Product {
   gender?: string
   is_new?: boolean
   height?: string
+  video_url?: string
 }
 
 interface ProductCardProps {
