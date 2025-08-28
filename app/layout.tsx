@@ -69,6 +69,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
+      <head>
+        {/* Google tag (gtag.js) */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-5BTCJPDN06"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-5BTCJPDN06');
+            `,
+          }}
+        />
+      </head>
       <body className={`${montserrat.variable} ${bebasNeue.variable} bg-sky-50 font-bebas`}>
           <div className="flex min-h-screen flex-col">
             <HeaderWithSidebar />
