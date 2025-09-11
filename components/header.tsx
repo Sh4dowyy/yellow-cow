@@ -6,6 +6,7 @@ import { Menu, X, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { usePathname, useRouter } from "next/navigation"
 import { supabase } from "@/utils/supabase/supabaseClient"
+import { isAdminFromUser } from "@/utils/is-admin"
 
 interface SearchResult {
   id: string
@@ -29,6 +30,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
   const isActive = (path: string) => {
@@ -37,11 +39,13 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setIsAuthenticated(true)
+        setIsAdmin(isAdminFromUser(user))
       } else {
         setIsAuthenticated(false)
+        setIsAdmin(false)
       }
       setLoading(false)
     }
@@ -50,11 +54,23 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
 
     // Слушаем изменения состояния авторизации
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        try {
+          await fetch('/auth/callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, session }),
+          })
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error('Auth sync error', e)
+        }
         if (event === 'SIGNED_IN' && session) {
           setIsAuthenticated(true)
+          setIsAdmin(isAdminFromUser(session.user))
         } else if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false)
+          setIsAdmin(false)
         }
         setLoading(false)
       }
@@ -203,16 +219,37 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
           <div className="hidden md:flex items-center gap-4">
             {/* Navigation Menu */}
             <nav className="flex items-center gap-6">
-              {isAuthenticated && (
+              {isAuthenticated && isAdmin && (
                 <Link
                   href="/admin"
-                                      className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/admin") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/admin") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
                 >
                   Админка
                 </Link>
               )}
-
-
+              {isAuthenticated ? (
+                <Link
+                  href="/account"
+                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/account") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                >
+                  Личный кабинет
+                </Link>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Link
+                    href="/login"
+                    className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/login") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                  >
+                    Войти
+                  </Link>
+                  <Link
+                    href="/register"
+                    className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/register") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                  >
+                    Регистрация
+                  </Link>
+                </div>
+              )}
             </nav>
 
             {/* Search Bar */}
@@ -372,7 +409,7 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
             </div>
 
             {/* Админка */}
-            {isAuthenticated && (
+            {isAuthenticated && isAdmin && (
               <Link
                 href="/admin"
                 className={`block text-base font-medium font-montserrat ${isActive("/admin") ? "text-sky-500" : "text-gray-700"}`}
@@ -380,6 +417,33 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
               >
                 Админка
               </Link>
+            )}
+            {/* Account/Login */}
+            {isAuthenticated ? (
+              <Link
+                href="/account"
+                className={`block text-base font-medium font-montserrat ${isActive("/account") ? "text-sky-500" : "text-gray-700"}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Личный кабинет
+              </Link>
+            ) : (
+              <div className="space-y-2">
+                <Link
+                  href="/login"
+                  className={`block text-base font-medium font-montserrat ${isActive("/login") ? "text-sky-500" : "text-gray-700"}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Войти
+                </Link>
+                <Link
+                  href="/register"
+                  className={`block text-base font-medium font-montserrat ${isActive("/register") ? "text-sky-500" : "text-gray-700"}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Регистрация
+                </Link>
+              </div>
             )}
           </div>
         )}
