@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ProductList from "@/components/product-list"
 import { supabase } from "@/utils/supabase/supabaseClient"
+import { isAdminFromUser } from "@/utils/is-admin"
 
 interface Product {
   id: string
@@ -1082,12 +1083,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (user) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && isAdminFromUser(user)) {
         setIsAuthenticated(true)
       } else {
         setIsAuthenticated(false)
-        router.push("/login")
+        router.push("/")
       }
       setIsLoading(false)
     }
