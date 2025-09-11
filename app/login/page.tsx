@@ -43,7 +43,6 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
                       <CardTitle className="text-2xl font-montserrat font-bold text-center">Вход в систему</CardTitle>
-          <CardDescription className="text-center">Введите свои данные для доступа к админ-панели</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -59,7 +58,6 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@ariatoys.ru"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
