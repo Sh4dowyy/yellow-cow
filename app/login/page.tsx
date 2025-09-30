@@ -16,11 +16,13 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setIsLoading(true)
 
     // Use Supabase's signIn method
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -31,11 +33,14 @@ export default function LoginPage() {
     if (error) {
       console.error("Error logging in:", error)
       setError("Неверный логин или пароль.")
-    } else {
-      // Successful login
-      localStorage.setItem("isAuthenticated", "true")
-      router.push("/") // Redirect to home after successful login
+      setIsLoading(false)
+      return
     }
+
+    // Successful login
+    localStorage.setItem("isAuthenticated", "true")
+    setIsLoading(false)
+    router.push("/") // Redirect to home after successful login
   }
 
   return (
@@ -75,8 +80,8 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={error !== null}>
-                Войти
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Входим..." : "Войти"}
               </Button>
             </div>
           </form>

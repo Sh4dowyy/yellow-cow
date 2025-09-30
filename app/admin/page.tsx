@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ProductList from "@/components/product-list"
-import { supabase } from "@/utils/supabase/supabaseClient"
+import { createClient as createSupabaseBrowserClient } from "@/utils/supabase/client"
 import { isAdminFromUser } from "@/utils/is-admin"
+
+// Create a browser Supabase client so Storage uploads include the auth session
+const supabase = createSupabaseBrowserClient()
 
 interface Product {
   id: string
@@ -1282,19 +1285,42 @@ const BlogManagement = () => {
     const fileName = `blog-${Math.random().toString(36).substring(2)}.${fileExt}`
     const filePath = `covers/${fileName}`
     try {
-      const { error: uploadError } = await supabase.storage
-        .from('blog-images')
-        .upload(filePath, file)
-      if (uploadError) {
+      // Ensure we have an auth session (required for Storage INSERT policies)
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+      const userId = sessionData?.session?.user?.id
+      // eslint-disable-next-line no-console
+      console.log('[blog-images] Auth session', { hasToken: Boolean(accessToken), userId })
+      if (!accessToken || !userId) {
         // eslint-disable-next-line no-console
-        console.error('Error uploading cover:', uploadError)
+        console.error('[blog-images] No auth session for upload')
         return null
       }
+      // eslint-disable-next-line no-console
+      console.log('[blog-images] Start upload', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        filePath,
+        bucket: 'blog-images',
+      })
+      const { error: uploadError } = await supabase.storage
+        .from('blog-images')
+        .upload(filePath, file, { upsert: true, contentType: file.type || 'application/octet-stream', cacheControl: '3600' })
+      if (uploadError) {
+        // eslint-disable-next-line no-console
+        console.error('[blog-images] Upload error:', uploadError)
+        return null
+      }
+      // eslint-disable-next-line no-console
+      console.log('[blog-images] Upload success', { filePath })
       const { data } = supabase.storage.from('blog-images').getPublicUrl(filePath)
+      // eslint-disable-next-line no-console
+      console.log('[blog-images] Public URL', { publicUrl: data?.publicUrl })
       return data.publicUrl
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error('Unexpected upload error:', e)
+      console.error('[blog-images] Unexpected upload error:', e)
       return null
     }
   }
@@ -1384,15 +1410,17 @@ const BlogManagement = () => {
 
   const deletePost = async (post: BlogPost) => {
     if (!confirm(`Удалить пост "${post.title}"?`)) return
-    const { error } = await supabase
+    const { error, status } = await supabase
       .from('blog_posts')
       .delete()
       .eq('id', post.id)
     if (error) {
       // eslint-disable-next-line no-console
-      console.error('Error deleting post:', error)
+      console.error('Error deleting post:', { error, status })
       alert('Не удалось удалить пост')
     } else {
+      // Optimistically remove from local state, then refresh list
+      setPosts((prev) => prev.filter((p) => p.id !== post.id))
       await fetchPosts()
       alert('Пост удалён')
     }
