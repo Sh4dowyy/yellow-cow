@@ -210,114 +210,103 @@ export default function Header({ onCategoryMenuToggle }: HeaderProps) {
               className="h-12 w-20"
             />
           </Link>
-          
+          {/* Middle: Search */}
+          <div className="hidden md:flex items-center gap-4 flex-1 relative" ref={searchRef}>
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Поиск..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    handleSearch(e.target.value)
+                  }}
+                  className="pl-10 pr-4 font-montserrat"
+                />
+              </div>
+            </form>
 
-          {/* Spacer */}
-          <div className="flex-1"></div>
-
-          {/* Right side: Navigation + Search */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Navigation Menu */}
-            <nav className="flex items-center gap-6">
-              {isAuthenticated && isAdmin && (
-                <Link
-                  href="/admin"
-                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/admin") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
-                >
-                  Админка
-                </Link>
-              )}
-              {isAuthenticated ? (
-                <Link
-                  href="/account"
-                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/account") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
-                >
-                  Личный кабинет
-                </Link>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <Link
-                    href="/login"
-                    className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/login") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
-                  >
-                    Войти
-                  </Link>
-                  <Link
-                    href="/register"
-                    className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/register") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
-                  >
-                    Регистрация
-                  </Link>
-                </div>
-              )}
-            </nav>
-
-            {/* Search Bar */}
-            <div className="relative w-full max-w-xs" ref={searchRef}>
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    type="text"
-                    placeholder="Поиск..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      handleSearch(e.target.value)
-                    }}
-                    className="pl-10 pr-4 font-montserrat"
-                  />
-                </div>
-              </form>
-
-              {/* Результаты поиска */}
-              {showSearchResults && (searchResults.length > 0 || isSearching) && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
-                  {isSearching ? (
-                    <div className="p-4 text-center text-gray-500 font-montserrat">
-                      Поиск...
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <>
-                      {searchResults.map((result) => (
-                        <button
-                          key={`${result.type}-${result.id}`}
-                          onClick={() => handleResultClick(result)}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900 font-montserrat">{result.name}</p>
-                              {result.description && (
-                                <p className="text-sm text-gray-500 font-montserrat line-clamp-1">{result.description}</p>
-                              )}
-                              {result.category_name && (
-                                <p className="text-xs text-sky-600 font-montserrat">{result.category_name}</p>
-                              )}
-                            </div>
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-montserrat">
-                              {result.type === 'product' ? 'Товар' : 'Категория'}
-                            </span>
+            {showSearchResults && (searchResults.length > 0 || isSearching) && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-96 overflow-y-auto z-50">
+                {isSearching ? (
+                  <div className="p-4 text-center text-gray-500 font-montserrat">Поиск...</div>
+                ) : searchResults.length > 0 ? (
+                  <>
+                    {searchResults.map((result) => (
+                      <button
+                        key={`${result.type}-${result.id}`}
+                        onClick={() => handleResultClick(result)}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900 font-montserrat">{result.name}</p>
+                            {result.description && (
+                              <p className="text-sm text-gray-500 font-montserrat line-clamp-1">{result.description}</p>
+                            )}
+                            {result.category_name && (
+                              <p className="text-xs text-sky-600 font-montserrat">{result.category_name}</p>
+                            )}
                           </div>
-                        </button>
-                      ))}
-                      {searchQuery.trim() && (
-                        <button
-                          onClick={() => handleSearchSubmit({ preventDefault: () => {} } as React.FormEvent)}
-                          className="w-full text-left px-4 py-3 hover:bg-sky-50 border-t border-gray-200 text-sky-600 font-medium font-montserrat"
-                        >
-                          Показать все результаты для "{searchQuery}"
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="p-4 text-center text-gray-500 font-montserrat">
-                      Ничего не найдено
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-montserrat">
+                            {result.type === 'product' ? 'Товар' : 'Категория'}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                    {searchQuery.trim() && (
+                      <button
+                        onClick={() => handleSearchSubmit({ preventDefault: () => {} } as React.FormEvent)}
+                        className="w-full text-left px-4 py-3 hover:bg-sky-50 border-t border-gray-200 text-sky-600 font-medium font-montserrat"
+                      >
+                        Показать все результаты для "{searchQuery}"
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-4 text-center text-gray-500 font-montserrat">Ничего не найдено</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: marketplace links and account/admin */}
+          <div className="hidden md:flex items-center gap-5">
+
+
+            {isAuthenticated && isAdmin && (
+              <Link
+                href="/admin"
+                className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/admin") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+              >
+                Админка
+              </Link>
+            )}
+            {isAuthenticated ? (
+              <Link
+                href="/account"
+                className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/account") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+              >
+                Личный кабинет
+              </Link>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/login"
+                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/login") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                >
+                  Войти
+                </Link>
+                <Link
+                  href="/register"
+                  className={`text-base font-medium font-montserrat transition-colors whitespace-nowrap ${isActive("/register") ? "text-sky-500" : "text-gray-700 hover:text-sky-500"}`}
+                >
+                  Регистрация
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile search button */}
