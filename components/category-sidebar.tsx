@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useRef, Suspense } from "react"
-import { X, ChevronRight, Package, Star, Award, Store } from "lucide-react"
-import Link from "next/link"
+import { X, ChevronRight, Package, Star, Award, Store, BookOpen } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 
 interface CategorySidebarProps {
@@ -24,7 +23,7 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside)
-      document.body.style.overflow = 'hidden' // Предотвращаем скролл страницы
+      document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -80,15 +79,19 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
     }
   }
 
-  // Check which menu item is active
+  const handleBlogClick = () => {
+    router.push('/blog')
+    onClose()
+  }
+
   const isCatalogActive = pathname === '/catalog'
-  const isPopularActive = false // Не используем активное состояние для главной страницы
-  const isBrandsActive = false // Не используем активное состояние для главной страницы
-  const isStoresActive = false // Не используем активное состояние для главной страницы
+  const isPopularActive = false
+  const isBrandsActive = false
+  const isStoresActive = false
+  const isBlogActive = pathname === '/blog'
 
   return (
     <>
-      {/* Overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
@@ -96,14 +99,12 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <div
         ref={sidebarRef}
         className={`fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-montserrat font-bold text-gray-800">Меню</h2>
           <button
@@ -115,10 +116,8 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="py-4">
-            {/* Открыть каталог */}
             <button
               onClick={handleCatalogClick}
               className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
@@ -148,7 +147,35 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
               }`} />
             </button>
 
-            {/* Популярные игрушки */}
+            <button
+              onClick={handleBlogClick}
+              className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
+                isBlogActive
+                  ? 'bg-sky-50 border-r-4 border-sky-500' 
+                  : 'hover:bg-gray-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen size={20} className={`transition-colors ${
+                  isBlogActive
+                    ? 'text-sky-600' 
+                    : 'text-gray-500 group-hover:text-sky-600'
+                }`} />
+                <span className={`font-medium font-montserrat ${
+                  isBlogActive
+                    ? 'text-sky-600 font-semibold' 
+                    : 'text-gray-800 group-hover:text-sky-600'
+                }`}>
+                  Блог
+                </span>
+              </div>
+              <ChevronRight size={16} className={`transition-colors ${
+                isBlogActive
+                  ? 'text-sky-600' 
+                  : 'text-gray-400 group-hover:text-sky-600'
+              }`} />
+            </button>
+
             <button
               onClick={handlePopularToysClick}
               className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
@@ -178,7 +205,6 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
               }`} />
             </button>
 
-            {/* Бренды */}
             <button
               onClick={handleBrandsClick}
               className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
@@ -208,7 +234,6 @@ function CategorySidebarContent({ isOpen, onClose }: CategorySidebarProps) {
               }`} />
             </button>
 
-            {/* Наши магазины */}
             <button
               onClick={handleStoresClick}
               className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors group ${
@@ -269,4 +294,4 @@ export default function CategorySidebar({ isOpen, onClose }: CategorySidebarProp
       <CategorySidebarContent isOpen={isOpen} onClose={onClose} />
     </Suspense>
   )
-} 
+}
