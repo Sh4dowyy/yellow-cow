@@ -258,6 +258,9 @@ export default function Home() {
               <button onClick={() => scrollToSection('brands')} className="bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
                 Бренды
               </button>
+              <a href="/blog" className="bg-blue-500 hover:bg-blue-600 text-white py-4 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all duration-300 transform hover:scale-105 shadow-lg whitespace-nowrap">
+                Блог
+              </a>
             </div>
             
             <div className="text-center">
