@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button"
 export default function AccountPage() {
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState<string | null>(null)
-  const [fullName, setFullName] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [patronymic, setPatronymic] = useState("")
   const [phone, setPhone] = useState("")
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -30,12 +32,14 @@ export default function AccountPage() {
       // load profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, phone, avatar_url')
+        .select('first_name, last_name, patronymic, phone, avatar_url')
         .eq('id', user.id)
         .single()
 
       if (profile) {
-        setFullName(profile.full_name || "")
+        setFirstName(profile.first_name || "")
+        setLastName(profile.last_name || "")
+        setPatronymic(profile.patronymic || "")
         setPhone(profile.phone || "")
         setAvatarUrl(profile.avatar_url || null)
       }
@@ -66,9 +70,12 @@ export default function AccountPage() {
     // upsert profile
     await supabase.from('profiles').upsert({
       id: user.id,
-      full_name: fullName || null,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      patronymic: patronymic || null,
       phone: phone || null,
       avatar_url: avatarUrl || null,
+      updated_at: new Date().toISOString(),
     })
     setSaving(false)
   }
@@ -168,9 +175,19 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="fullName" className="font-montserrat">ФИО</Label>
-                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="font-montserrat" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="font-montserrat">Имя</Label>
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="font-montserrat" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="font-montserrat">Фамилия</Label>
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} className="font-montserrat" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="patronymic" className="font-montserrat">Отчество</Label>
+                  <Input id="patronymic" value={patronymic} onChange={(e) => setPatronymic(e.target.value)} className="font-montserrat" />
+                </div>
               </div>
 
               <div className="space-y-2">

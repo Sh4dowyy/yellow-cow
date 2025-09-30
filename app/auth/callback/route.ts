@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (code) {
-    let response = NextResponse.redirect(new URL("/account", request.url));
+    let response = NextResponse.redirect(new URL("/login", request.url));
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            response = NextResponse.redirect(new URL("/account", request.url));
+            response = NextResponse.redirect(new URL("/login", request.url));
             cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
           },
         },
