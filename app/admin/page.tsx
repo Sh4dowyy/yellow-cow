@@ -1410,19 +1410,37 @@ const BlogManagement = () => {
 
   const deletePost = async (post: BlogPost) => {
     if (!confirm(`Удалить пост "${post.title}"?`)) return
-    const { error, status } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', post.id)
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting post:', { error, status })
-      alert('Не удалось удалить пост')
-    } else {
-      // Optimistically remove from local state, then refresh list
+  
+    try {
+      // Получаем текущую сессию пользователя
+      const { data: sessionData } = await supabase.auth.getSession()
+      const userId = sessionData?.session?.user?.id
+  
+      if (!userId) {
+        alert('Для удаления поста требуется авторизация')
+        return
+      }
+  
+      // Приводим id к правильному типу (число или строка)
+      const postId: string | number = isNaN(Number(post.id)) ? post.id : Number(post.id)
+  
+      const { data, error, status } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', postId)
+  
+      if (error) {
+        console.error('Error deleting post:', { error, status })
+        alert(`Не удалось удалить пост: ${error.message}`)
+        return
+      }
+  
+      // Обновляем локальное состояние
       setPosts((prev) => prev.filter((p) => p.id !== post.id))
-      await fetchPosts()
       alert('Пост удалён')
+    } catch (e) {
+      console.error('Unexpected error deleting post:', e)
+      alert('Произошла непредвиденная ошибка при удалении поста')
     }
   }
 
@@ -1441,7 +1459,6 @@ const BlogManagement = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Обложка (URL или загрузка файла)</label>
-            <input className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 mb-2" placeholder="https://..." value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
             <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files ? e.target.files[0] : null)} />
           </div>
           <div>
