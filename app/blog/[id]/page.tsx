@@ -1,21 +1,28 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 
+// Define the blog post type
 interface BlogPost {
   id: string;
   title: string;
   content: string;
-  cover_url?: string;
+  cover_url: string | null;
   created_at: string;
 }
 
-export default async function BlogPostPage({ params }: { params: { id: string } }) {
+// Dynamic page component
+export default async function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("blog_posts")
     .select("id, title, content, cover_url, created_at")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !data) return notFound();
@@ -55,10 +62,9 @@ export default async function BlogPostPage({ params }: { params: { id: string } 
 
         {/* Content */}
         <div className="px-6 py-4">
-          <article
-            className="text-gray-800 dark:text-gray-200 text-base leading-relaxed whitespace-pre-line"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          <article className="text-gray-800 dark:text-gray-200 text-base leading-relaxed whitespace-pre-line">
+            {post.content}
+          </article>
         </div>
       </section>
     </main>

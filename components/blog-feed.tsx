@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 interface BlogPost {
   id: string;
@@ -16,17 +16,29 @@ interface FullPost extends BlogPost {
 }
 
 export default function BlogFeed({ initialPosts }: { initialPosts: BlogPost[] }) {
+  const supabase = useMemo(() => createClient(), []);
   const [openPost, setOpenPost] = useState<FullPost | null>(null);
   const [loading, setLoading] = useState(false);
 
   const openPostPopup = async (id: string) => {
     setLoading(true);
 
-    // Fetch full post from Supabase API
-    const res = await fetch(`/api/blog/${id}`);
-    const data = await res.json();
+    const { data } = await supabase
+      .from("blog_posts")
+      .select("id, title, content, cover_url, created_at")
+      .eq("id", id)
+      .single();
 
-    setOpenPost(data);
+    if (data) {
+      setOpenPost({
+        id: data.id,
+        title: data.title,
+        excerpt: "", // not used in modal
+        coverUrl: data.cover_url || null,
+        createdAt: data.created_at,
+        content: data.content || "",
+      });
+    }
     setLoading(false);
   };
 
